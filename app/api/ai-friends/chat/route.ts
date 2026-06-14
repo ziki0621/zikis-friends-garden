@@ -15,6 +15,7 @@ import {
 import { callFriendModelJson } from "@/lib/ai/openAICompatible";
 import { filterRelationsForFriends, normalizeFriendRelations } from "@/lib/ai/friendRelations";
 import { runOrchestratedConversation } from "@/lib/ai/friendOrchestrator";
+import { assembleContext } from "@/lib/ai/contextAssembler";
 
 export const maxDuration = 90;
 
@@ -33,6 +34,8 @@ type ChatRequest = {
   model?: unknown;
   providerName?: unknown;
   aiMode?: unknown;
+  groupId?: unknown;
+  groupName?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -51,6 +54,8 @@ export async function POST(request: Request) {
   const interactionType: InteractionType = body.interactionType === "ambient" ? "ambient" : "user";
   const groupStyle = typeof body.groupStyle === "string" ? body.groupStyle.slice(0, 80) : "温柔治愈 + 热闹整活";
   const userState = typeof body.userState === "string" ? body.userState.slice(0, 160) : "";
+  const groupId = typeof body.groupId === "string" ? body.groupId.slice(0, 48) : "";
+  const groupName = typeof body.groupName === "string" ? body.groupName.slice(0, 24) : "AI 朋友群";
 
   const replyPlan =
     friends.length === 1

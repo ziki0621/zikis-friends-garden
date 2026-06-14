@@ -76,6 +76,8 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
     const uc = getUserApiConfig();
     return {
       aiMode: getAiMode(),
+      groupId: group.id,
+      groupName: group.name,
       ...extra,
       ...(uc ? { apiKey: uc.apiKey, baseUrl: uc.baseUrl, model: uc.model, providerName: uc.providerName } : {})
     };

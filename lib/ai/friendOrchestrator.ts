@@ -13,6 +13,13 @@ type OrchestrateInput = {
   userState: string;
   userConfig?: { apiKey?: string; baseUrl?: string; model?: string; providerName?: string } | null;
   interactionType?: "user" | "ambient";
+  /** 预拼装的 5 层上下文（由 contextAssembler 产生） */
+  assembledContext?: {
+    userProfile: string;
+    groupSummary: string;
+    friendMemories: string;
+    relatedHistory: string;
+  };
 };
 
 type Batch = {
