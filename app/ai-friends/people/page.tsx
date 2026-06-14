@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, GitBranch, Pencil, RefreshCw, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, GitBranch, RefreshCw, UserPlus, Users } from "lucide-react";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import {
   defaultUserProfile, type UserProfile, readUserProfile, writeUserProfile
@@ -141,7 +141,10 @@ export default function PeoplePage() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-4">
+              <button
+                className="flex w-full items-center gap-4 text-left"
+                onClick={() => { setDraftProfile({ ...profile }); setEditingProfile(true); }}
+              >
                 <AvatarCircle
                   avatar={profile.avatar}
                   emoji={profile.emoji}
@@ -150,19 +153,17 @@ export default function PeoplePage() {
                   label={profile.name}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[17px] font-semibold text-ink-deep">{profile.name || "我"}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[17px] font-semibold text-ink-deep">{profile.name || "我"}</p>
+                    <span className="text-[10px] font-medium text-sage-600 bg-sage-50 rounded-full px-2 py-0.5">编辑</span>
+                  </div>
                   <p className="mt-0.5 text-[13px] text-ink-muted">{profile.title || "在庄园里散步的人"}</p>
                   {profile.about && (
                     <p className="mt-1 text-[12px] text-ink-faint">{profile.about.slice(0, 48)}</p>
                   )}
                 </div>
-                <button
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-manor-100 text-ink-soft hover:bg-manor-200"
-                  onClick={() => { setDraftProfile({ ...profile }); setEditingProfile(true); }}
-                >
-                  <Pencil size={15} />
-                </button>
-              </div>
+                <ArrowLeft size={15} className="rotate-180 text-ink-faint shrink-0" />
+              </button>
             )}
           </div>
 
