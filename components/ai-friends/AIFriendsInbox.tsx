@@ -58,6 +58,7 @@ export function AIFriendsInbox() {
   const [pinned, setPinned] = useState<string[]>([]);
   const [menuTarget, setMenuTarget] = useState<string | null>(null);
   const [apiModalOpen, setApiModalOpen] = useState(false);
+  const [splash, setSplash] = useState(true);
 
   const [unreadRefresh, setUnreadRefresh] = useState(0);
 
@@ -68,6 +69,8 @@ export function AIFriendsInbox() {
     setPinned(getPinnedChats());
     seedInitialUnreads();
     requestAnimationFrame(() => setMounted(true));
+    // 首次加载开场动画
+    const timer = setTimeout(() => setSplash(false), 1400);
     // 从聊天页返回时刷新未读数
     const onFocus = () => setUnreadRefresh((c) => c + 1);
     const onStorage = () => setUnreadRefresh((c) => c + 1);
@@ -189,7 +192,32 @@ export function AIFriendsInbox() {
   );
 
   return (
-    <main className="app-backdrop h-dvh overflow-hidden">
+    <main className="app-backdrop h-dvh overflow-hidden relative">
+      {/* ═══ 入场动画 ═══ */}
+      <div
+        className={`absolute inset-0 z-50 flex items-center justify-center bg-cream-warm transition-all duration-700 ease-out pointer-events-none ${
+          splash ? "opacity-100" : "opacity-0"
+        }`}
+        aria-hidden={!splash}
+      >
+        <div className={`flex flex-col items-center gap-4 transition-all duration-700 delay-100 ${splash ? "translate-y-0 scale-100" : "translate-y-6 scale-95"}`}>
+          <div
+            className="text-[64px] animate-bounce select-none"
+            style={{ animationDuration: "2s" }}
+          >
+            🌿
+          </div>
+          <p className="font-semibold text-ink-deep tracking-[-0.01em]" style={{ fontFamily: "Playfair Display, serif" }}>
+            ziki 的朋友庄园
+          </p>
+          <div className="flex gap-1.5 pt-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-sage-400 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" style={{ animationDelay: "0.15s" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" style={{ animationDelay: "0.3s" }} />
+          </div>
+        </div>
+      </div>
+
       <div className="phone-shell mx-auto flex h-dvh min-h-0 max-w-[440px] flex-col bg-cream-warm">
 
         {/* ═══ 头部 ═══ */}

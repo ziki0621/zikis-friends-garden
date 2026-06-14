@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, GitBranch, Users } from "lucide-react";
+import { ArrowLeft, GitBranch, RefreshCw, Users } from "lucide-react";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { defaultUserProfile, type UserProfile, readUserProfile } from "@/components/ai-friends/friendSettings";
 import { readVisibleAIFriends } from "@/components/ai-friends/aiFriendRosterStorage";
 import { friendChatGroups } from "@/lib/ai/friendChatGroups";
 import { type AIFriend } from "@/lib/ai/friendGroup";
+import { resetAllData } from "@/components/ai-friends/resetStorage";
 
 export default function PeoplePage() {
   const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
@@ -112,6 +113,26 @@ export default function PeoplePage() {
               </div>
               <ArrowLeft size={15} className="rotate-180 text-ink-faint" />
             </Link>
+
+            {/* 一键重置 */}
+            <div className="manor-divider-gold my-3" />
+            <button
+              className="flex w-full items-center gap-4 rounded-[18px] bg-rose-50/60 px-4 py-4 shadow-sm ring-1 ring-rose-200/30 transition hover:bg-rose-100/70 hover:-translate-y-0.5 active:translate-y-0"
+              onClick={() => {
+                if (!window.confirm("确定要清除所有数据并重启吗？\n\n你的聊天记录、设定、API Key 都会被删除。")) return;
+                resetAllData();
+                window.location.href = "/ai-friends";
+              }}
+            >
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-rose-100 text-rose-500">
+                <RefreshCw size={19} />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-[15px] font-semibold text-rose-600">一键重置</p>
+                <p className="mt-0.5 text-[12px] text-rose-400/80">清除所有本地数据，像第一次打开一样</p>
+              </div>
+              <ArrowLeft size={15} className="rotate-180 text-rose-300" />
+            </button>
           </div>
         </section>
       </div>
