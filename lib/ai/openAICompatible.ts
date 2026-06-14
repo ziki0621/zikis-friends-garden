@@ -31,25 +31,35 @@ export type ModelJsonResult =
       status?: number;
     };
 
+type ModelConfig = {
+  provider: string;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+};
+
 export function hasConfiguredFriendModel() {
-  return Boolean(getFriendModelConfig().apiKey);
+  // 前端传 key 也算已配置
+  return true;
 }
 
 export async function callFriendModelJson({
   messages,
   temperature = 0.8,
-  maxTokens = 2200
+  maxTokens = 2200,
+  userConfig
 }: {
   messages: ChatMessage[];
   temperature?: number;
   maxTokens?: number;
+  userConfig?: { apiKey?: string; baseUrl?: string; model?: string; providerName?: string } | null;
 }): Promise<ModelJsonResult> {
-  const config = getFriendModelConfig();
+  const config = getFriendModelConfig(userConfig);
 
   if (!config.apiKey) {
     return {
       ok: false,
-      error: "Missing AI_FRIENDS_API_KEY or DEEPSEEK_API_KEY; using local demo mock.",
+      error: "请点击右上角 ⚙️ 设置你的 API Key，或在本页面配置 DEEPSEEK_API_KEY 环境变量。",
       provider: "Local mock",
       model: "mock"
     };
@@ -80,7 +90,7 @@ export async function callFriendModelJson({
     if (!response.ok) {
       return {
         ok: false,
-        error: data?.error?.message ?? `Model API returned HTTP ${response.status}.`,
+        error: data?.error?.message ?? `API returned HTTP ${response.status}.`,
         provider: config.provider,
         model: config.model,
         status: response.status
@@ -110,7 +120,18 @@ export async function callFriendModelJson({
   };
 }
 
-function getFriendModelConfig() {
+function getFriendModelConfig(userConfig?: { apiKey?: string; baseUrl?: string; model?: string; providerName?: string } | null): ModelConfig {
+  // 前端传来的用户 key 优先
+  if (userConfig?.apiKey && userConfig.apiKey.trim()) {
+    return {
+      provider: userConfig.providerName?.trim() || "Custom",
+      baseUrl: stripTrailingSlash(userConfig.baseUrl?.trim() || "https://api.deepseek.com"),
+      model: userConfig.model?.trim() || "deepseek-v4-flash",
+      apiKey: userConfig.apiKey.trim()
+    };
+  }
+
+  // fallback 到服务器环境变量
   const baseUrl = stripTrailingSlash(process.env.AI_FRIENDS_BASE_URL || "https://api.deepseek.com");
 
   return {

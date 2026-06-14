@@ -6,7 +6,7 @@ import {
   normalizeFriends,
   parseJsonFromModel
 } from "@/lib/ai/friendGroup";
-import { callFriendModelJson, hasConfiguredFriendModel } from "@/lib/ai/openAICompatible";
+import { callFriendModelJson } from "@/lib/ai/openAICompatible";
 
 export const maxDuration = 30;
 
@@ -16,6 +16,10 @@ type ProactiveRequest = {
   friends?: unknown;
   groupStyle?: unknown;
   userState?: unknown;
+  apiKey?: unknown;
+  baseUrl?: unknown;
+  model?: unknown;
+  providerName?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -31,12 +35,21 @@ export async function POST(request: Request) {
   const groupStyle = typeof body.groupStyle === "string" ? body.groupStyle.slice(0, 80) : "像熟朋友一样自然冒泡";
   const userState = typeof body.userState === "string" ? body.userState.slice(0, 160) : "";
 
-  if (!hasConfiguredFriendModel()) {
+  const userConfig = {
+    apiKey: typeof body.apiKey === "string" ? body.apiKey.trim() : undefined,
+    baseUrl: typeof body.baseUrl === "string" ? body.baseUrl.trim() : undefined,
+    model: typeof body.model === "string" ? body.model.trim() : undefined,
+    providerName: typeof body.providerName === "string" ? body.providerName.trim() : undefined
+  };
+
+  const hasServerKey = Boolean(process.env.AI_FRIENDS_API_KEY || process.env.DEEPSEEK_API_KEY);
+  const hasUserKey = Boolean(userConfig.apiKey);
+  if (!hasServerKey && !hasUserKey) {
     return NextResponse.json({
-      provider: "Local mock",
+      provider: "未配置 API",
       model: "mock",
       usingMock: true,
-      warning: "Set AI_FRIENDS_API_KEY or DEEPSEEK_API_KEY to call a real OpenAI-compatible model.",
+      warning: "请在聊天设置中填入 API Key。",
       ...mockProactiveResponse(eventType, friends)
     });
   }
@@ -63,7 +76,8 @@ export async function POST(request: Request) {
       }
     ],
     temperature: 0.75,
-    maxTokens: 900
+    maxTokens: 900,
+    userConfig: hasUserKey ? userConfig : undefined
   });
 
   if (!modelResult.ok) {

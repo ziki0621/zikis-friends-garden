@@ -12,7 +12,7 @@ import {
   normalizeMode,
   parseJsonFromModel
 } from "@/lib/ai/friendGroup";
-import { callFriendModelJson, hasConfiguredFriendModel } from "@/lib/ai/openAICompatible";
+import { callFriendModelJson } from "@/lib/ai/openAICompatible";
 import { filterRelationsForFriends, normalizeFriendRelations } from "@/lib/ai/friendRelations";
 
 export const maxDuration = 30;
@@ -27,6 +27,11 @@ type ChatRequest = {
   userState?: unknown;
   interactionType?: unknown;
   relations?: unknown;
+  // 用户前端传入的 API 配置
+  apiKey?: unknown;
+  baseUrl?: unknown;
+  model?: unknown;
+  providerName?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -45,13 +50,10 @@ export async function POST(request: Request) {
   const interactionType: InteractionType = body.interactionType === "ambient" ? "ambient" : "user";
   const groupStyle = typeof body.groupStyle === "string" ? body.groupStyle.slice(0, 80) : "温柔治愈 + 热闹整活";
   const userState = typeof body.userState === "string" ? body.userState.slice(0, 160) : "";
+
   const baseReplyPlan =
     interactionType === "ambient"
-      ? {
-          min: 1,
-          max: 3,
-          label: "群友基于上一条群友消息自然续聊，轻量接话后就停"
-        }
+      ? { min: 1, max: 3, label: "群友基于上一条群友消息自然续聊，轻量接话后就停" }
       : estimateReplyPlan(message, mode);
   const replyPlan =
     friends.length === 1
@@ -63,12 +65,23 @@ export async function POST(request: Request) {
         }
       : baseReplyPlan;
 
-  if (!hasConfiguredFriendModel()) {
+  // 用户前端传入的 API 配置
+  const userConfig = {
+    apiKey: typeof body.apiKey === "string" ? body.apiKey.trim() : undefined,
+    baseUrl: typeof body.baseUrl === "string" ? body.baseUrl.trim() : undefined,
+    model: typeof body.model === "string" ? body.model.trim() : undefined,
+    providerName: typeof body.providerName === "string" ? body.providerName.trim() : undefined
+  };
+
+  // 既没有服务器 key 也没有用户 key → mock
+  const hasServerKey = Boolean(process.env.AI_FRIENDS_API_KEY || process.env.DEEPSEEK_API_KEY);
+  const hasUserKey = Boolean(userConfig.apiKey);
+  if (!hasServerKey && !hasUserKey) {
     return NextResponse.json({
-      provider: "Local mock",
+      provider: "未配置 API",
       model: "mock",
       usingMock: true,
-      warning: "Set AI_FRIENDS_API_KEY or DEEPSEEK_API_KEY to call a real OpenAI-compatible model.",
+      warning: "请在聊天设置中填入 API Key（支持 DeepSeek、OpenAI、Groq 等）。",
       ...mockFriendGroupResponse(message, mode, friends, replyPlan)
     });
   }
@@ -98,7 +111,8 @@ export async function POST(request: Request) {
           interactionType
         })
       }
-    ]
+    ],
+    userConfig: hasUserKey ? userConfig : undefined
   });
 
   if (!modelResult.ok) {

@@ -33,6 +33,7 @@ import { clearUnread, seedInitialUnreads } from "@/components/ai-friends/unreadS
 import {
   writePendingBatch, readPendingBatch, clearPendingBatch
 } from "@/components/ai-friends/pendingStorage";
+import { getUserApiConfig } from "@/components/ai-friends/apiKeyStorage";
 import { useRouter } from "next/navigation";
 
 /* ── types ── */
@@ -65,6 +66,16 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
   const [headerMenu, setHeaderMenu] = useState(false);
   const router = useRouter();
   const isDM = group.id.startsWith("dm-");
+
+  /** 构建 API 请求体，注入用户自己的 API 配置 */
+  function apiBody(extra: Record<string, unknown>) {
+    const uc = getUserApiConfig();
+    return {
+      ...extra,
+      ...(uc ? { apiKey: uc.apiKey, baseUrl: uc.baseUrl, model: uc.model, providerName: uc.providerName } : {})
+    };
+  }
+
   const endRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -182,7 +193,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
       const res = await fetch("/api/ai-friends/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: fmtHistory(msg, qt), history: hist, memory: toMemoryContext(mem), friends, mode: group.mode, groupStyle: group.style, relations: rels, userState: userStateStr(group.userState, userProfile) })
+        body: JSON.stringify(apiBody({ message: fmtHistory(msg, qt), history: hist, memory: toMemoryContext(mem), friends, mode: group.mode, groupStyle: group.style, relations: rels, userState: userStateStr(group.userState, userProfile) }))
       });
       const data = await readRes(res);
       if (isErr(data)) throw new Error(data.error || "发送失败");
@@ -296,7 +307,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
       const res = await fetch("/api/ai-friends/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: ambientTrigger(userMsg, last, delivered), history: hist, memory: toMemoryContext(mem), friends, mode: group.mode, groupStyle: group.style, relations: rels, userState: userStateStr(group.userState, userProfile), interactionType: "ambient" })
+        body: JSON.stringify(apiBody({ message: ambientTrigger(userMsg, last, delivered), history: hist, memory: toMemoryContext(mem), friends, mode: group.mode, groupStyle: group.style, relations: rels, userState: userStateStr(group.userState, userProfile), interactionType: "ambient" }))
       });
       const data = await readRes(res);
       if (runRef.current !== runId) return;
