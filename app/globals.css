@@ -135,72 +135,96 @@ a {
    聊天壁纸 · 四种可选花纹
    ═══════════════════════════════════════════ */
 
-/* 默认：庄园花园 */
-.chat-wallpaper {
-  background-color: #f8f4ec;
-  background-image:
-    radial-gradient(ellipse 60% 30% at 50% 5%, rgba(245, 235, 212, 0.6), transparent),
-    radial-gradient(circle at 14% 22%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 18px, transparent 18px),
-    radial-gradient(circle at 82% 18%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 14px, transparent 14px),
-    radial-gradient(circle at 38% 62%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 20px, transparent 20px),
-    radial-gradient(circle at 66% 48%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 16px, transparent 16px),
-    radial-gradient(ellipse 28px 16px at 30% 34%, rgba(125,155,118,0.035) 0, transparent 100%),
-    radial-gradient(ellipse 22px 14px at 72% 56%, rgba(125,155,118,0.035) 0, transparent 100%),
-    radial-gradient(ellipse 24px 12px at 54% 82%, rgba(125,155,118,0.035) 0, transparent 100%),
-    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(184,150,62,0.01) 4px, rgba(184,150,62,0.01) 6px);
-  background-size: 100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%;
-}
-
-/* 亚麻纹理 */
-.chat-wallpaper-linen {
-  background-color: #f6f2e9;
-  background-image:
-    radial-gradient(ellipse 50% 25% at 50% 3%, rgba(255,251,240,0.7), transparent),
-    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180,160,130,0.03) 2px, rgba(180,160,130,0.03) 3px),
-    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(180,160,130,0.025) 40px, rgba(180,160,130,0.025) 41px),
-    repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(180,160,130,0.012) 8px, rgba(180,160,130,0.012) 9px);
-  background-size: 100% 100%,100% 100%,100% 100%,100% 100%;
-}
-
-/* 星空夜幕 */
-.chat-wallpaper-stars {
-  background-color: #efe8d8;
-  background-image:
-    radial-gradient(ellipse 50% 20% at 50% 2%, rgba(255,248,230,0.8), transparent),
-    radial-gradient(circle at 12% 16%, rgba(140,130,110,0.06) 0, transparent 2px),
-    radial-gradient(circle at 28% 24%, rgba(140,130,110,0.05) 0, transparent 1.5px),
-    radial-gradient(circle at 45% 14%, rgba(140,130,110,0.07) 0, transparent 2.5px),
-    radial-gradient(circle at 63% 22%, rgba(140,130,110,0.04) 0, transparent 1.5px),
-    radial-gradient(circle at 78% 18%, rgba(140,130,110,0.06) 0, transparent 2px),
-    radial-gradient(circle at 8% 42%, rgba(140,130,110,0.05) 0, transparent 1.5px),
-    radial-gradient(circle at 34% 38%, rgba(140,130,110,0.04) 0, transparent 2px),
-    radial-gradient(circle at 56% 44%, rgba(140,130,110,0.06) 0, transparent 1.5px),
-    radial-gradient(circle at 70% 36%, rgba(140,130,110,0.04) 0, transparent 2.5px),
-    radial-gradient(circle at 88% 46%, rgba(140,130,110,0.05) 0, transparent 1.5px),
-    radial-gradient(circle at 22% 68%, rgba(140,130,110,0.06) 0, transparent 2px),
-    radial-gradient(circle at 50% 72%, rgba(140,130,110,0.04) 0, transparent 1.5px),
-    radial-gradient(circle at 76% 64%, rgba(140,130,110,0.05) 0, transparent 2px);
-  background-size: 100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%;
-}
-
-/* 素净纯色 */
-.chat-wallpaper-plain {
-  background-color: #f7f3ec;
-  background-image:
-    radial-gradient(ellipse 50% 20% at 50% 2%, rgba(255,251,240,0.5), transparent);
-  background-size: 100% 100%;
-}
 
 /* ═══════════════════════════════════════════
-   聊天壁纸 · 动效背景
+   聊天壁纸 · 七种肉眼可见的背景
    ═══════════════════════════════════════════ */
 
-/* 花瓣飘落 */
-.chat-wallpaper-sakura {
-  background-color: #f8f1e8;
+/* 所有聊天气泡层需要高于背景装饰 */
+.chat-wallpaper > *,
+.chat-wallpaper-sakura > *,
+.chat-wallpaper-aurora > *,
+.chat-wallpaper-cosmos > *,
+.chat-wallpaper-linen > *,
+.chat-wallpaper-stars > *,
+.chat-wallpaper-plain > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 1. 庄园花园 —— 大朵金花 + 绿叶 ── */
+.chat-wallpaper {
+  background: #f8f4ec;
+  /* 底部装饰：左下角大花 */
   background-image:
-    radial-gradient(ellipse 50% 20% at 50% 2%, rgba(245,225,210,0.7), transparent);
+    /* 主花 */
+    radial-gradient(circle at 18% 92%, #e8d5a3 0, #e8d5a3 40px, transparent 40px),
+    radial-gradient(circle at 22% 88%, #ecdcaa 0, #ecdcaa 28px, transparent 28px),
+    radial-gradient(circle at 14% 86%, #f0e0b0 0, #f0e0b0 24px, transparent 24px),
+    /* 花瓣 */
+    radial-gradient(ellipse 22px 30px at 10% 95%, #e0cf98 0, transparent 100%),
+    radial-gradient(ellipse 18px 26px at 25% 96%, #e5d3a0 0, transparent 100%),
+    radial-gradient(ellipse 20px 24px at 18% 80%, #decb94 0, transparent 100%),
+    /* 叶片 */
+    radial-gradient(ellipse 30px 15px at 28% 85%, #a8c9a0 0, transparent 100%),
+    radial-gradient(ellipse 35px 12px at 12% 78%, #b0d0a8 0, transparent 100%),
+    /* 右上角小花 */
+    radial-gradient(circle at 88% 14%, #e8d5a3 0, #e8d5a3 18px, transparent 18px),
+    radial-gradient(circle at 84% 10%, #ecdcaa 0, #ecdcaa 14px, transparent 14px),
+    radial-gradient(ellipse 16px 10px at 82% 18%, #a8c9a0 0, transparent 100%),
+    radial-gradient(ellipse 14px 8px at 90% 20%, #b0d0a8 0, transparent 100%);
   background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-attachment: local;
+}
+
+/* ── 2. 亚麻纹理 —— 清晰经纬线 ── */
+.chat-wallpaper-linen {
+  background-color: #f4efe5;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(160,140,100,0.12) 3px, rgba(160,140,100,0.12) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(140,120,80,0.10) 6px, rgba(140,120,80,0.10) 7px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(120,100,60,0.15) 60px, rgba(120,100,60,0.15) 61px),
+    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(120,100,60,0.08) 60px, rgba(120,100,60,0.08) 61px);
+  background-size: 100% 100%;
+  background-repeat: repeat;
+}
+
+/* ── 3. 星点夜幕 —— 深底色 + 明亮星点 ── */
+.chat-wallpaper-stars {
+  background-color: #e8e0ce;
+  background-image:
+    radial-gradient(2px 2px at 10% 15%, #9e8e6e 0, transparent 100%),
+    radial-gradient(2.5px 2.5px at 25% 20%, #8a7a5a 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 10%, #9e8e6e 0, transparent 100%),
+    radial-gradient(3px 3px at 55% 25%, #7a6a4a 0, transparent 100%),
+    radial-gradient(2px 2px at 70% 15%, #8a7a5a 0, transparent 100%),
+    radial-gradient(1.8px 1.8px at 85% 20%, #9e8e6e 0, transparent 100%),
+    radial-gradient(2px 2px at 15% 45%, #8a7a5a 0, transparent 100%),
+    radial-gradient(2.5px 2.5px at 35% 40%, #9e8e6e 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 50%, #7a6a4a 0, transparent 100%),
+    radial-gradient(2px 2px at 65% 42%, #8a7a5a 0, transparent 100%),
+    radial-gradient(3px 3px at 80% 48%, #9e8e6e 0, transparent 100%),
+    radial-gradient(1.8px 1.8px at 20% 70%, #7a6a4a 0, transparent 100%),
+    radial-gradient(2px 2px at 45% 72%, #8a7a5a 0, transparent 100%),
+    radial-gradient(2.5px 2.5px at 62% 68%, #9e8e6e 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 78% 75%, #7a6a4a 0, transparent 100%),
+    radial-gradient(2px 2px at 30% 88%, #8a7a5a 0, transparent 100%),
+    radial-gradient(2.5px 2.5px at 55% 85%, #9e8e6e 0, transparent 100%),
+    radial-gradient(1.8px 1.8px at 72% 90%, #7a6a4a 0, transparent 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* ── 4. 素净暖色 —— 纯粹米白底 ── */
+.chat-wallpaper-plain {
+  background-color: #faf7f1;
+  background-image: none;
+}
+
+/* ── 5. 飘落花瓣 🌸 —— CSS 动画花瓣雨 ── */
+.chat-wallpaper-sakura {
+  background-color: #f9f2e8;
   position: relative;
   overflow: hidden;
 }
@@ -210,28 +234,53 @@ a {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image:
-    radial-gradient(circle at 12% -5%, rgba(245,180,170,0.5) 0, transparent 8%),
-    radial-gradient(circle at 35% -3%, rgba(250,200,180,0.4) 0, transparent 5%),
-    radial-gradient(circle at 58% -6%, rgba(245,185,175,0.45) 0, transparent 7%),
-    radial-gradient(circle at 75% -2%, rgba(248,195,185,0.38) 0, transparent 6%),
-    radial-gradient(circle at 90% -4%, rgba(245,180,170,0.42) 0, transparent 7%);
-  animation: sakura-fall 8s linear infinite;
+  background:
+    radial-gradient(6px 8px at 10% -10%, rgba(245,155,155,0.55) 0, transparent 100%),
+    radial-gradient(5px 7px at 30% -15%, rgba(248,170,160,0.50) 0, transparent 100%),
+    radial-gradient(7px 9px at 55% -8%, rgba(240,150,150,0.52) 0, transparent 100%),
+    radial-gradient(5px 7px at 75% -12%, rgba(245,165,158,0.48) 0, transparent 100%),
+    radial-gradient(6px 8px at 90% -6%, rgba(242,148,148,0.54) 0, transparent 100%),
+    radial-gradient(4px 6px at 20% -20%, rgba(250,175,165,0.45) 0, transparent 100%),
+    radial-gradient(5px 7px at 65% -18%, rgba(245,160,155,0.50) 0, transparent 100%),
+    radial-gradient(6px 8px at 45% -22%, rgba(248,168,158,0.47) 0, transparent 100%);
+  background-size: 100% 140%;
+  background-repeat: no-repeat;
+  animation: sakura-fall 6s ease-in-out infinite;
 }
 @keyframes sakura-fall {
-  0% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%; opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { background-position: 8% 110%, 3% 115%, -5% 112%, 7% 108%, -3% 114%; opacity: 0; }
+  0%   { background-position: 0% 0%; opacity: 0.4; }
+  50%  { background-position: 4% 110%; opacity: 1; }
+  100% { background-position: -2% 200%; opacity: 0.4; }
+}
+/* 第二层花瓣，不同速度 */
+.chat-wallpaper-sakura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(4px 5px at 25% -5%, rgba(255,180,170,0.4) 0, transparent 100%),
+    radial-gradient(5px 6px at 50% -8%, rgba(250,175,165,0.38) 0, transparent 100%),
+    radial-gradient(4px 5px at 78% -3%, rgba(245,170,160,0.42) 0, transparent 100%),
+    radial-gradient(6px 7px at 5% -12%, rgba(248,178,168,0.36) 0, transparent 100%),
+    radial-gradient(5px 6px at 40% -15%, rgba(242,160,152,0.40) 0, transparent 100%),
+    radial-gradient(4px 5px at 85% -10%, rgba(250,172,162,0.38) 0, transparent 100%);
+  background-size: 100% 140%;
+  background-repeat: no-repeat;
+  animation: sakura-fall-slow 9s ease-in-out infinite 1.5s;
+}
+@keyframes sakura-fall-slow {
+  0%   { background-position: -3% 0%; opacity: 0.3; }
+  50%  { background-position: 0% 115%; opacity: 0.9; }
+  100% { background-position: 5% 210%; opacity: 0.3; }
 }
 
-/* 浮动光点 */
+/* ── 6. 柔光浮动 —— 缓缓飘移的金色光晕 ── */
 .chat-wallpaper-aurora {
-  background-color: #f4efe6;
-  background-image:
-    radial-gradient(ellipse 60% 30% at 30% 15%, rgba(184,150,62,0.06), transparent),
-    radial-gradient(ellipse 50% 30% at 70% 80%, rgba(125,155,118,0.04), transparent);
-  background-size: 100% 100%;
+  background-color: #f5f0e4;
+  position: relative;
+  overflow: hidden;
 }
 .chat-wallpaper-aurora::before {
   content: "";
@@ -240,55 +289,61 @@ a {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(212,184,96,0.15) 0, transparent 12px),
-    radial-gradient(circle at 60% 50%, rgba(184,150,62,0.1) 0, transparent 10px),
-    radial-gradient(circle at 85% 25%, rgba(212,184,96,0.12) 0, transparent 14px),
-    radial-gradient(circle at 40% 70%, rgba(184,150,62,0.08) 0, transparent 8px),
-    radial-gradient(circle at 10% 65%, rgba(212,184,96,0.1) 0, transparent 11px);
-  background-size: 140% 140%;
-  animation: aurora-drift 12s ease-in-out infinite;
+    radial-gradient(ellipse 120px 80px at 25% 35%, rgba(210,180,90,0.22) 0, transparent 100%),
+    radial-gradient(ellipse 90px 60px at 65% 55%, rgba(190,160,80,0.18) 0, transparent 100%),
+    radial-gradient(ellipse 100px 70px at 50% 20%, rgba(220,190,100,0.15) 0, transparent 100%),
+    radial-gradient(ellipse 80px 50px at 15% 70%, rgba(200,170,85,0.16) 0, transparent 100%);
+  background-size: 200% 200%;
+  background-repeat: no-repeat;
+  animation: aurora-drift 8s ease-in-out infinite;
 }
 @keyframes aurora-drift {
-  0%, 100% { background-position: 0% 0%; opacity: 0.5; }
-  25% { background-position: 3% 2%; opacity: 0.8; }
-  50% { background-position: 0% 4%; opacity: 0.6; }
-  75% { background-position: -3% 2%; opacity: 0.9; }
+  0%, 100% { background-position: 0% 0%; }
+  25%  { background-position: 3% 1.5%; }
+  50%  { background-position: -1% 3%; }
+  75%  { background-position: 2% -0.5%; }
 }
 
-/* 星点旋转 */
+/* ── 7. 星辰流转 —— 缓慢旋转的星点 ── */
 .chat-wallpaper-cosmos {
-  background-color: #f5f0e5;
-  background-image:
-    radial-gradient(ellipse 50% 20% at 50% 3%, rgba(248,240,225,0.8), transparent);
-  background-size: 100% 100%;
+  background-color: #f2ede0;
+  overflow: hidden;
 }
 .chat-wallpaper-cosmos::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -10%;
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 15% 18%, rgba(140,120,90,0.08) 0, transparent 2.5px),
-    radial-gradient(circle at 30% 25%, rgba(140,120,90,0.06) 0, transparent 1.5px),
-    radial-gradient(circle at 45% 12%, rgba(140,120,90,0.09) 0, transparent 2px),
-    radial-gradient(circle at 60% 22%, rgba(140,120,90,0.05) 0, transparent 3px),
-    radial-gradient(circle at 78% 16%, rgba(140,120,90,0.07) 0, transparent 1.8px),
-    radial-gradient(circle at 8% 45%, rgba(140,120,90,0.06) 0, transparent 2px),
-    radial-gradient(circle at 22% 38%, rgba(140,120,90,0.08) 0, transparent 2.5px),
-    radial-gradient(circle at 48% 42%, rgba(140,120,90,0.05) 0, transparent 1.5px),
-    radial-gradient(circle at 68% 36%, rgba(140,120,90,0.07) 0, transparent 2px),
-    radial-gradient(circle at 82% 44%, rgba(140,120,90,0.06) 0, transparent 2.5px),
-    radial-gradient(circle at 18% 68%, rgba(140,120,90,0.07) 0, transparent 2px),
-    radial-gradient(circle at 42% 72%, rgba(140,120,90,0.05) 0, transparent 1.5px),
-    radial-gradient(circle at 65% 64%, rgba(140,120,90,0.08) 0, transparent 2px),
-    radial-gradient(circle at 88% 68%, rgba(140,120,90,0.06) 0, transparent 2.5px);
+    radial-gradient(2.5px 2.5px at 15% 20%, rgba(110,90,60,0.35) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 28%, rgba(120,100,70,0.30) 0, transparent 100%),
+    radial-gradient(2px 2px at 48% 12%, rgba(100,80,50,0.32) 0, transparent 100%),
+    radial-gradient(3px 3px at 62% 22%, rgba(110,90,60,0.28) 0, transparent 100%),
+    radial-gradient(1.8px 1.8px at 78% 18%, rgba(120,100,70,0.33) 0, transparent 100%),
+    radial-gradient(2.2px 2.2px at 8% 48%, rgba(100,80,50,0.30) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 22% 38%, rgba(110,90,60,0.34) 0, transparent 100%),
+    radial-gradient(2.8px 2.8px at 42% 46%, rgba(120,100,70,0.28) 0, transparent 100%),
+    radial-gradient(2px 2px at 58% 42%, rgba(100,80,50,0.31) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 38%, rgba(110,90,60,0.33) 0, transparent 100%),
+    radial-gradient(2.5px 2.5px at 88% 44%, rgba(120,100,70,0.29) 0, transparent 100%),
+    radial-gradient(2px 2px at 18% 68%, rgba(100,80,50,0.32) 0, transparent 100%),
+    radial-gradient(1.8px 1.8px at 38% 72%, rgba(110,90,60,0.30) 0, transparent 100%),
+    radial-gradient(3px 3px at 56% 64%, rgba(120,100,70,0.27) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 70% 70%, rgba(100,80,50,0.33) 0, transparent 100%),
+    radial-gradient(2.2px 2.2px at 82% 66%, rgba(110,90,60,0.31) 0, transparent 100%),
+    radial-gradient(2px 2px at 12% 88%, rgba(120,100,70,0.29) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 34% 90%, rgba(100,80,50,0.32) 0, transparent 100%),
+    radial-gradient(2.5px 2.5px at 52% 86%, rgba(110,90,60,0.30) 0, transparent 100%),
+    radial-gradient(1.8px 1.8px at 68% 88%, rgba(120,100,70,0.28) 0, transparent 100%);
   background-size: 200% 200%;
-  animation: cosmos-spin 20s linear infinite;
+  background-repeat: no-repeat;
+  animation: cosmos-spin 30s linear infinite;
+  opacity: 0.7;
 }
 @keyframes cosmos-spin {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 5% 5%; }
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* ═══════════════════════════════════════════
