@@ -139,6 +139,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
       boundaries: boundaries.trim() || friend!.boundaries
     });
     window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("friend-updated"));
     setSaved(true);
   }
 

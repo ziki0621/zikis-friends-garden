@@ -66,11 +66,23 @@ export function AIFriendsInbox() {
     // 从聊天页返回时刷新未读数
     const onFocus = () => setUnreadRefresh((c) => c + 1);
     const onStorage = () => setUnreadRefresh((c) => c + 1);
+    const refreshAll = () => {
+      setSettings(readFriendSettings());
+      setSourceGroups(readVisibleFriendChatGroups());
+      setFriends(readVisibleAIFriends());
+      setUnreadRefresh((c) => c + 1);
+    };
     window.addEventListener("focus", onFocus);
     window.addEventListener("storage", onStorage);
+    window.addEventListener("user-profile-changed", refreshAll);
+    window.addEventListener("friend-updated", refreshAll);
+    window.addEventListener("group-avatar-changed", refreshAll);
     return () => {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("user-profile-changed", refreshAll);
+      window.removeEventListener("friend-updated", refreshAll);
+      window.removeEventListener("group-avatar-changed", refreshAll);
     };
   }, []);
 

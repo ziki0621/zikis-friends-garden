@@ -77,6 +77,7 @@ export function writeUserProfile(profile: UserProfile) {
   }
 
   window.localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(sanitizeUserProfile(profile)));
+  window.dispatchEvent(new Event("user-profile-changed"));
 }
 
 export function getConfiguredFriends(groupId: string, fallbackFriends: AIFriend[], settings: FriendSettingsMap) {

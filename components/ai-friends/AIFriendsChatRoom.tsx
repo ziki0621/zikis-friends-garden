@@ -134,7 +134,13 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
 
     function h() { setFriends(getStoredConfiguredFriends(group.id, group.friends)); setUserProfile(readUserProfile()); }
     window.addEventListener("storage", h);
-    return () => window.removeEventListener("storage", h);
+    window.addEventListener("user-profile-changed", h);
+    window.addEventListener("friend-updated", h);
+    return () => {
+      window.removeEventListener("storage", h);
+      window.removeEventListener("user-profile-changed", h);
+      window.removeEventListener("friend-updated", h);
+    };
   }, [group]);
 
   useEffect(() => {

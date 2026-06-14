@@ -34,6 +34,7 @@ export default function PeoplePage() {
     writeUserProfile(draftProfile);
     setProfile(draftProfile);
     setEditingProfile(false);
+    window.dispatchEvent(new Event("user-profile-changed"));
     refreshData();
   }
 
