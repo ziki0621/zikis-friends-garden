@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, GitBranch, RefreshCw, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, GitBranch, UserPlus, Users } from "lucide-react";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import {
   defaultUserProfile, type UserProfile, readUserProfile, writeUserProfile
 } from "@/components/ai-friends/friendSettings";
 import { readVisibleAIFriends, createStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
 import { createStoredFriendChatGroup } from "@/components/ai-friends/friendChatGroupStorage";
-import { readVisibleFriendChatGroups } from "@/components/ai-friends/friendChatGroupStorage";
 import { type AIFriend } from "@/lib/ai/friendGroup";
-import { resetAllData, backupAllData, hasBackup, restoreFromBackup, discardBackup } from "@/components/ai-friends/resetStorage";
 
 export default function PeoplePage() {
   const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
@@ -20,11 +18,9 @@ export default function PeoplePage() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [creating, setCreating] = useState<"group" | "friend" | null>(null);
   const [newName, setNewName] = useState("");
-  const [backupExists, setBackupExists] = useState(false);
 
   useEffect(() => {
     refreshData();
-    setBackupExists(hasBackup());
     window.addEventListener("storage", refreshData);
     return () => window.removeEventListener("storage", refreshData);
   }, []);
@@ -205,32 +201,6 @@ export default function PeoplePage() {
 
           {/* 菜单 */}
           <div className="px-4 py-4 space-y-2.5">
-            {/* 群聊管理 */}
-            {(() => {
-              const visibleGroups = readVisibleFriendChatGroups();
-              if (visibleGroups.length > 0) {
-                return (
-                  <div className="mb-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted mb-2 px-1">群聊管理 · {visibleGroups.length} 个</p>
-                    <div className="space-y-1.5">
-                      {visibleGroups.map((g) => (
-                        <Link
-                          key={g.id}
-                          className="flex items-center gap-3 rounded-[14px] bg-white px-3 py-2.5 shadow-sm ring-1 ring-black/[0.02] transition hover:shadow-md"
-                          href={`/ai-friends/settings/${g.id}`}
-                        >
-                          <Users size={15} className="text-ink-muted shrink-0" />
-                          <span className="text-[13px] font-medium text-ink-deep">{g.name}</span>
-                          <ArrowLeft size={12} className="rotate-180 text-ink-faint ml-auto" />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-
             {/* 人物关系 */}
             <Link
               className="flex items-center gap-4 rounded-[18px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/[0.03] transition hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
@@ -245,54 +215,6 @@ export default function PeoplePage() {
               </div>
               <ArrowLeft size={15} className="rotate-180 text-ink-faint" />
             </Link>
-
-            {/* 一键重置 */}
-            <div className="manor-divider-gold my-3" />
-            <button
-              className="flex w-full items-center gap-4 rounded-[18px] bg-rose-50/60 px-4 py-4 shadow-sm ring-1 ring-rose-200/30 transition hover:bg-rose-100/70 hover:-translate-y-0.5 active:translate-y-0"
-              onClick={() => {
-                if (!window.confirm(
-                  "确定要清除所有数据并重启吗？\n\n" +
-                  "所有群聊、AI 朋友、聊天记录和设定都会被删除。\n" +
-                  "你的 API Key 不会受影响。\n\n" +
-                  "重置后可以在这里「撤销还原」，恢复重置前的状态。"
-                )) return;
-                backupAllData();
-                resetAllData();
-                setBackupExists(true);
-                window.location.href = "/ai-friends";
-              }}
-            >
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-rose-100 text-rose-500">
-                <RefreshCw size={19} />
-              </div>
-              <div className="min-w-0 flex-1 text-left">
-                <p className="text-[15px] font-semibold text-rose-600">一键重置</p>
-                <p className="mt-0.5 text-[12px] text-rose-400/80">清除所有本地数据，像第一次打开一样</p>
-              </div>
-              <ArrowLeft size={15} className="rotate-180 text-rose-300" />
-            </button>
-
-            {/* 撤销还原 */}
-            {backupExists && (
-              <button
-                className="mt-2.5 flex w-full items-center gap-4 rounded-[18px] bg-sage-50/60 px-4 py-4 shadow-sm ring-1 ring-sage-200/30 transition hover:bg-sage-100/70 hover:-translate-y-0.5 active:translate-y-0"
-                onClick={() => {
-                  if (!window.confirm("确定恢复到重置前的状态吗？\n\n所有聊天记录、朋友设定和群聊都会还原。")) return;
-                  restoreFromBackup();
-                  window.location.href = "/ai-friends";
-                }}
-              >
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-sage-100 text-sage-600">
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-undo-2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
-                </div>
-                <div className="min-w-0 flex-1 text-left">
-                  <p className="text-[15px] font-semibold text-sage-700">撤销还原</p>
-                  <p className="mt-0.5 text-[12px] text-sage-500/80">恢复到重置前的所有数据</p>
-                </div>
-                <ArrowLeft size={15} className="rotate-180 text-sage-300" />
-              </button>
-            )}
           </div>
         </section>
       </div>

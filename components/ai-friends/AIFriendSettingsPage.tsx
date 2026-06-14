@@ -170,7 +170,7 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
           <div className="border-b border-gold-200/20 px-4 py-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[14px] font-semibold text-ink-deep">聊天背景</h2>
-              <span className="rounded-full bg-manor-100 px-2 py-0.5 text-[10px] font-semibold text-ink-muted">{wallpapers.length} 种</span>
+              <span className="rounded-full bg-manor-100 px-2 py-0.5 text-[10px] font-semibold text-ink-muted">4 种</span>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               {wallpapers.map((wp) => {
@@ -192,23 +192,12 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl">{wp.emoji}</span>
                       <span className="text-[13px] font-semibold text-ink-deep">{wp.label}</span>
-                      {wp.animated && (
-                        <span className="text-[9px] font-medium text-purple-600 bg-purple-50 rounded-full px-1.5 py-px ml-auto">动效</span>
-                      )}
-                      {active && !wp.animated && (
-                        <span className="ml-auto text-[10px] text-sage-500 font-semibold">使用中</span>
-                      )}
-                      {active && wp.animated && (
-                        <span className="text-[9px] text-sage-500 font-semibold">✓</span>
-                      )}
+                      {active && <span className="ml-auto text-[10px] text-sage-500 font-semibold">使用中</span>}
                     </div>
                     <div
                       className={`mt-2 h-10 rounded-[8px] border border-black/[0.03] ${
                         wp.id === "garden" ? "bg-[#f8f4ec]" :
                         wp.id === "linen" ? "bg-[#f6f2e9]" :
-                        wp.id === "sakura" ? "bg-[#f8f1e8]" :
-                        wp.id === "aurora" ? "bg-[#f4efe6]" :
-                        wp.id === "cosmos" ? "bg-[#f5f0e5]" :
                         wp.id === "stars" ? "bg-[#efe8d8]" :
                         "bg-[#f7f3ec]"
                       }`}

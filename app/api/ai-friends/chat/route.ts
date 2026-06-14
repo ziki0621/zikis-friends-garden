@@ -32,6 +32,7 @@ type ChatRequest = {
   baseUrl?: unknown;
   model?: unknown;
   providerName?: unknown;
+  aiMode?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -78,8 +79,9 @@ export async function POST(request: Request) {
     });
   }
 
-  // ═══ 编排模式：多朋友群聊 ═══
-  if (friends.length >= 2) {
+  // ═══ 编排模式（"真实模式"）：多朋友群聊 ═══
+  const aiMode = typeof body.aiMode === "string" ? body.aiMode : "realistic";
+  if (aiMode === "realistic" && friends.length >= 2) {
     try {
       const response = await runOrchestratedConversation({
         message,

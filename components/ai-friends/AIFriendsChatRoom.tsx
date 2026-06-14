@@ -34,6 +34,7 @@ import {
   writePendingBatch, readPendingBatch, clearPendingBatch
 } from "@/components/ai-friends/pendingStorage";
 import { getUserApiConfig } from "@/components/ai-friends/apiKeyStorage";
+import { getAiMode } from "@/components/ai-friends/modeStorage";
 import { getWallpaperClass } from "@/components/ai-friends/wallpaperStorage";
 import { useRouter } from "next/navigation";
 
@@ -74,6 +75,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
   function apiBody(extra: Record<string, unknown>) {
     const uc = getUserApiConfig();
     return {
+      aiMode: getAiMode(),
       ...extra,
       ...(uc ? { apiKey: uc.apiKey, baseUrl: uc.baseUrl, model: uc.model, providerName: uc.providerName } : {})
     };
@@ -407,7 +409,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
         {/* ═══ 消息区 ═══ */}
         <section
           ref={scrollRef}
-          className={`${wallpaper} soft-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3.5 py-4 relative`}
+          className={`${wallpaper} soft-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 py-4`}
           onScroll={() => {
             const el = scrollRef.current;
             if (!el) return;

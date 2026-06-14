@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { GitBranch, Key, Pin, PinOff, Search, Trash2, UserRound, Users } from "lucide-react";
+import { GitBranch, Pin, PinOff, Search, Settings, Trash2, UserRound, Users } from "lucide-react";
 import { type AIFriend } from "@/lib/ai/friendGroup";
 import { friendChatGroups, type FriendChatGroup } from "@/lib/ai/friendChatGroups";
 import { GroupAvatarStack } from "@/components/ai-friends/GroupAvatarStack";
@@ -23,8 +23,6 @@ import {
 import { getPinnedChats, pinChat, unpinChat } from "@/components/ai-friends/pinStorage";
 import { getLastActivity } from "@/components/ai-friends/activityStorage";
 import { clearUnread, getUnread, seedInitialUnreads } from "@/components/ai-friends/unreadStorage";
-import { ApiKeyModal } from "@/components/ai-friends/ApiKeyModal";
-import { hasUserApiConfig, getUserApiConfig } from "@/components/ai-friends/apiKeyStorage";
 
 /* ═══ 统一的对话项类型 ═══ */
 type ConversationItem = {
@@ -52,7 +50,6 @@ export function AIFriendsInbox() {
   const [mounted, setMounted] = useState(false);
   const [pinned, setPinned] = useState<string[]>([]);
   const [menuTarget, setMenuTarget] = useState<string | null>(null);
-  const [apiModalOpen, setApiModalOpen] = useState(false);
   const [splash, setSplash] = useState(true);
 
   const [unreadRefresh, setUnreadRefresh] = useState(0);
@@ -204,25 +201,10 @@ export function AIFriendsInbox() {
         {/* ═══ 头部 ═══ */}
         <header className="sticky top-0 z-10 bg-cream-warm/95 backdrop-blur-2xl px-5 pb-3 pt-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-deep">
-                消息
-              </h1>
-              {hasUserApiConfig() && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-sage-50 px-2 py-0.5 text-[10px] font-medium text-sage-600 ring-1 ring-sage-200/50">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sage-400" />
-                  {getUserApiConfig()?.providerName || "API"}
-                </span>
-              )}
-            </div>
+            <h1 className="text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-deep">
+              消息
+            </h1>
             <div className="flex items-center gap-1">
-              <button
-                className="grid h-8 w-8 place-items-center rounded-full text-ink-muted transition hover:bg-manor-100 hover:text-ink-soft"
-                title="API 设置"
-                onClick={() => setApiModalOpen(true)}
-              >
-                <Key size={16} />
-              </button>
               <Link
                 className="grid h-8 w-8 place-items-center rounded-full text-ink-muted transition hover:bg-manor-100 hover:text-ink-soft"
                 href="/ai-friends/people"
@@ -344,7 +326,7 @@ export function AIFriendsInbox() {
         </section>
 
         {/* ═══ 底部导航 ═══ */}
-        <nav className="grid shrink-0 grid-cols-2 border-t border-gold-200/20 bg-cream-warm/95 px-2 py-2 text-[10px] font-medium backdrop-blur-2xl">
+        <nav className="grid shrink-0 grid-cols-3 border-t border-gold-200/20 bg-cream-warm/95 px-2 py-2 text-[10px] font-medium backdrop-blur-2xl">
           <button className="relative flex flex-col items-center gap-1 text-sage-600">
             <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             消息
@@ -358,10 +340,13 @@ export function AIFriendsInbox() {
             <UserRound size={22} strokeWidth={1.8} />
             人物
           </Link>
+          <Link className="flex flex-col items-center gap-1 text-ink-muted transition hover:text-ink-soft" href="/ai-friends/setting">
+            <Settings size={22} strokeWidth={1.8} />
+            设置
+          </Link>
         </nav>
       </div>
 
-      <ApiKeyModal open={apiModalOpen} onClose={() => setApiModalOpen(false)} />
     </main>
   );
 }
