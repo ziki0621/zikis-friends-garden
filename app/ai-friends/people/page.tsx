@@ -119,7 +119,7 @@ export default function PeoplePage() {
             <button
               className="flex w-full items-center gap-4 rounded-[18px] bg-rose-50/60 px-4 py-4 shadow-sm ring-1 ring-rose-200/30 transition hover:bg-rose-100/70 hover:-translate-y-0.5 active:translate-y-0"
               onClick={() => {
-                if (!window.confirm("确定要清除所有数据并重启吗？\n\n你的聊天记录、设定、API Key 都会被删除。")) return;
+                if (!window.confirm("确定要清除所有数据并重启吗？\n\n所有群聊、AI 朋友、聊天记录和设定都会被删除。\n你的 API Key 不会受影响，可在主页 🔑 中单独管理。")) return;
                 resetAllData();
                 window.location.href = "/ai-friends";
               }}

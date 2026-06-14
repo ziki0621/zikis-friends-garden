@@ -115,15 +115,6 @@ export function ApiKeyModal({ open, onClose }: Props) {
               {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {hasExisting && (
-            <button
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-rose-50 text-rose-500 hover:bg-rose-100"
-              title="清除"
-              onClick={remove}
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
         </div>
 
         {/* Base URL */}
@@ -208,6 +199,20 @@ export function ApiKeyModal({ open, onClose }: Props) {
           <Check size={17} />
           {saved ? "已保存" : "保存并刷新"}
         </button>
+
+        {/* 清除 API Key */}
+        {hasExisting && (
+          <button
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 h-10 text-[13px] font-medium text-rose-600 rounded-[14px] bg-rose-50/60 border border-rose-200/30 transition hover:bg-rose-100/70"
+            onClick={() => {
+              if (!window.confirm("确定要清除已保存的 API Key 吗？\n\n清除后对话将使用本地 mock 回复，直到你重新填入新的 Key。")) return;
+              remove();
+            }}
+          >
+            <Trash2 size={15} />
+            清除 API Key
+          </button>
+        )}
 
         {hasExisting && (
           <p className="mt-2 text-center text-[11px] text-sage-600 font-medium">
