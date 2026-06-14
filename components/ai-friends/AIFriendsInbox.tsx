@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { GitBranch, Key, MoreHorizontal, Pin, PinOff, Plus, Search, Trash2, UserRound, Users } from "lucide-react";
+import { GitBranch, Key, MoreHorizontal, Pin, PinOff, Search, Trash2, UserRound, Users } from "lucide-react";
 import { type AIFriend } from "@/lib/ai/friendGroup";
 import { friendChatGroups, type FriendChatGroup } from "@/lib/ai/friendChatGroups";
 import { GroupAvatarStack } from "@/components/ai-friends/GroupAvatarStack";
@@ -13,12 +13,10 @@ import {
   readFriendSettings
 } from "@/components/ai-friends/friendSettings";
 import {
-  createStoredFriendChatGroup,
   deleteStoredFriendChatGroup,
   readVisibleFriendChatGroups
 } from "@/components/ai-friends/friendChatGroupStorage";
 import {
-  createStoredAIFriend,
   deleteStoredAIFriend,
   readVisibleAIFriends
 } from "@/components/ai-friends/aiFriendRosterStorage";
@@ -50,10 +48,6 @@ export function AIFriendsInbox() {
   const [settings, setSettings] = useState<FriendSettingsMap>({});
   const [sourceGroups, setSourceGroups] = useState<FriendChatGroup[]>(friendChatGroups);
   const [friends, setFriends] = useState<AIFriend[]>([]);
-  const [creating, setCreating] = useState(false);
-  const [creatingFriend, setCreatingFriend] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newFriendName, setNewFriendName] = useState("");
   const [mounted, setMounted] = useState(false);
   const [pinned, setPinned] = useState<string[]>([]);
   const [menuTarget, setMenuTarget] = useState<string | null>(null);
@@ -143,20 +137,6 @@ export function AIFriendsInbox() {
   }, [conversations, query]);
 
   /* ── 操作 ── */
-  function createGroup() {
-    const group = createStoredFriendChatGroup(newGroupName);
-    setSourceGroups(readVisibleFriendChatGroups());
-    setNewGroupName(""); setCreating(false);
-    window.location.href = `/ai-friends/settings/${group.id}`;
-  }
-
-  function createFriend() {
-    const friend = createStoredAIFriend(newFriendName);
-    setFriends(readVisibleAIFriends());
-    setNewFriendName(""); setCreatingFriend(false);
-    window.location.href = `/ai-friends/dm/${friend.id}`;
-  }
-
   function deleteConversation(c: ConversationItem) {
     if (!window.confirm(`删除「${c.name}」？聊天记录也会移除。`)) return;
     if (c.type === "group") {
@@ -241,42 +221,8 @@ export function AIFriendsInbox() {
               >
                 <GitBranch size={16} />
               </Link>
-              <button
-                className="grid h-8 w-8 place-items-center rounded-full bg-sage-500 text-white shadow-manor-sage transition hover:bg-sage-600"
-                onClick={() => { setCreating((c) => !c); if (creatingFriend) setCreatingFriend(false); }}
-              >
-                <Plus size={19} />
-              </button>
             </div>
           </div>
-
-          {creating && (
-            <form
-              className="mt-3 flex animate-fade-up items-center gap-2"
-              onSubmit={(e) => { e.preventDefault(); createGroup(); }}
-            >
-              <input
-                className="manor-input h-9 min-w-0 flex-1 px-3.5 text-sm"
-                maxLength={18} placeholder="群聊名称..." autoFocus
-                value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
-              />
-              <button className="manor-btn-primary h-9 px-4 text-sm disabled:opacity-40" disabled={newGroupName.trim().length === 0} type="submit">创建</button>
-            </form>
-          )}
-
-          {creatingFriend && (
-            <form
-              className="mt-3 flex animate-fade-up items-center gap-2"
-              onSubmit={(e) => { e.preventDefault(); createFriend(); }}
-            >
-              <input
-                className="manor-input h-9 min-w-0 flex-1 px-3.5 text-sm"
-                maxLength={18} placeholder="朋友名字..." autoFocus
-                value={newFriendName} onChange={(e) => setNewFriendName(e.target.value)}
-              />
-              <button className="manor-btn-primary h-9 px-4 text-sm disabled:opacity-40" disabled={newFriendName.trim().length === 0} type="submit">创建</button>
-            </form>
-          )}
 
           <label className="mt-3 flex h-9 items-center gap-2.5 rounded-[14px] bg-white/80 px-3.5 text-ink-muted shadow-sm ring-1 ring-black/[0.03] transition focus-within:ring-gold-200/50">
             <Search size={15} />
@@ -384,7 +330,7 @@ export function AIFriendsInbox() {
         </section>
 
         {/* ═══ 底部导航 ═══ */}
-        <nav className="grid shrink-0 grid-cols-3 border-t border-gold-200/20 bg-cream-warm/95 px-2 py-2 text-[10px] font-medium backdrop-blur-2xl">
+        <nav className="grid shrink-0 grid-cols-2 border-t border-gold-200/20 bg-cream-warm/95 px-2 py-2 text-[10px] font-medium backdrop-blur-2xl">
           <button className="relative flex flex-col items-center gap-1 text-sage-600">
             <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             消息
@@ -398,13 +344,6 @@ export function AIFriendsInbox() {
             <UserRound size={22} strokeWidth={1.8} />
             人物
           </Link>
-          <button
-            className={`flex flex-col items-center gap-1 transition hover:text-ink-soft ${creatingFriend ? "text-sage-600" : "text-ink-muted"}`}
-            onClick={() => { setCreatingFriend((c) => !c); if (creating) setCreating(false); }}
-          >
-            <Plus size={22} strokeWidth={1.8} />
-            新建
-          </button>
         </nav>
       </div>
 

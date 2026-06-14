@@ -338,7 +338,11 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
             <Link className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-soft transition hover:bg-manor-100" href="/ai-friends">
               <ArrowLeft size={19} />
             </Link>
-            <GroupAvatarStack accent={group.accent} friends={friends} size="sm" groupId={group.id} />
+            {isDM ? (
+              <AvatarCircle avatar={friends[0]?.avatar} emoji={friends[0]?.emoji} className="h-9 w-9 text-sm" color={friends[0]?.color ?? group.accent} label={group.name} />
+            ) : (
+              <GroupAvatarStack accent={group.accent} friends={friends} size="sm" groupId={group.id} />
+            )}
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">{group.name}</h1>
               <p className="truncate text-[11px] leading-4 text-ink-muted">{friends.length} 位朋友</p>

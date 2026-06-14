@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, GitBranch, RefreshCw, Users } from "lucide-react";
+import { ArrowLeft, GitBranch, MessageCircle, Plus, RefreshCw, UserPlus, Users } from "lucide-react";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { defaultUserProfile, type UserProfile, readUserProfile } from "@/components/ai-friends/friendSettings";
 import { readVisibleAIFriends } from "@/components/ai-friends/aiFriendRosterStorage";
+import { createStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
+import { createStoredFriendChatGroup } from "@/components/ai-friends/friendChatGroupStorage";
 import { friendChatGroups } from "@/lib/ai/friendChatGroups";
 import { type AIFriend } from "@/lib/ai/friendGroup";
 import { resetAllData } from "@/components/ai-friends/resetStorage";
@@ -13,6 +15,8 @@ import { resetAllData } from "@/components/ai-friends/resetStorage";
 export default function PeoplePage() {
   const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
   const [friends, setFriends] = useState<AIFriend[]>([]);
+  const [creating, setCreating] = useState<"group" | "friend" | null>(null);
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     setProfile(readUserProfile());
@@ -23,6 +27,20 @@ export default function PeoplePage() {
   }, []);
 
   const firstGroupId = friendChatGroups[0]?.id ?? "inner-noise";
+
+  function doCreate(type: "group" | "friend") {
+    const name = newName.trim();
+    if (!name) return;
+    if (type === "friend") {
+      const friend = createStoredAIFriend(name);
+      setNewName(""); setCreating(null);
+      window.location.href = `/ai-friends/dm/${friend.id}`;
+    } else {
+      const group = createStoredFriendChatGroup(name);
+      setNewName(""); setCreating(null);
+      window.location.href = `/ai-friends/settings/${group.id}`;
+    }
+  }
 
   return (
     <main className="app-backdrop h-dvh overflow-hidden">
@@ -35,10 +53,51 @@ export default function PeoplePage() {
               <ArrowLeft size={19} />
             </Link>
             <h1 className="text-[22px] font-semibold leading-[1.2] tracking-[-0.02em] text-ink-deep">人物</h1>
+            <div className="flex-1" />
+            <button
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sage-500 text-white shadow-manor-sage transition hover:bg-sage-600"
+              onClick={() => { setCreating(creating ? null : "group"); setNewName(""); }}
+            >
+              <Plus size={18} />
+            </button>
           </div>
         </header>
 
         <section className="soft-scrollbar min-h-0 flex-1 overflow-y-auto bg-white/60">
+
+          {/* 新建表单 */}
+          {creating && (
+            <div className="border-b border-gold-200/20 bg-cream-warm px-4 py-3 animate-fade-up">
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition ${creating === "group" ? "bg-sage-500 text-white" : "bg-manor-100 text-ink-muted"}`}
+                  onClick={() => setCreating("group")}
+                >
+                  新建群聊
+                </button>
+                <button
+                  className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition ${creating === "friend" ? "bg-sage-500 text-white" : "bg-manor-100 text-ink-muted"}`}
+                  onClick={() => setCreating("friend")}
+                >
+                  新建朋友
+                </button>
+              </div>
+              <form className="flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); doCreate(creating); }}>
+                <input
+                  className="manor-input h-9 min-w-0 flex-1 px-3.5 text-sm"
+                  maxLength={18}
+                  placeholder={creating === "friend" ? "朋友名字..." : "群聊名称..."}
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+                <button className="manor-btn-primary h-9 px-4 text-sm disabled:opacity-40" disabled={newName.trim().length === 0} type="submit">
+                  创建
+                </button>
+              </form>
+            </div>
+          )}
+
           {/* 我 */}
           <div className="border-b border-gold-200/20 px-4 py-5">
             <div className="flex items-center gap-4">
@@ -81,6 +140,9 @@ export default function PeoplePage() {
                   <span className="text-[12px] font-medium text-ink-soft text-center truncate w-[72px]">{f.name}</span>
                 </Link>
               ))}
+              {friends.length === 0 && (
+                <p className="text-[12px] text-ink-faint py-3">还没有 AI 朋友，点右上角 + 新建</p>
+              )}
             </div>
           </div>
 
