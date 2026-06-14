@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { GitBranch, Key, MoreHorizontal, Pin, PinOff, Search, Trash2, UserRound, Users } from "lucide-react";
+import { GitBranch, Key, Pin, PinOff, Search, Trash2, UserRound, Users } from "lucide-react";
 import { type AIFriend } from "@/lib/ai/friendGroup";
 import { friendChatGroups, type FriendChatGroup } from "@/lib/ai/friendChatGroups";
 import { GroupAvatarStack } from "@/components/ai-friends/GroupAvatarStack";
@@ -245,7 +245,7 @@ export function AIFriendsInbox() {
 
         {/* ═══ 统一对话列表 ═══ */}
         <section className="soft-scrollbar min-h-0 flex-1 overflow-y-auto">
-          <div className="px-3 pt-2">
+          <div>
             {filtered.map((c, i) => {
               const isPinned = pinned.includes(c.id);
               return (
@@ -254,52 +254,54 @@ export function AIFriendsInbox() {
                   className="group relative"
                   style={{
                     opacity: mounted ? 1 : 0,
-                    transform: mounted ? "translateY(0)" : "translateY(8px)",
-                    transition: `all 0.35s cubic-bezier(0.34, 1.36, 0.48, 1) ${i * 0.04}s`
+                    transform: mounted ? "translateY(0)" : "translateY(6px)",
+                    transition: `all 0.3s ease ${i * 0.03}s`
                   }}
                 >
-                  <div className={`flex items-stretch rounded-[16px] transition-colors duration-200 ${isPinned ? "bg-gold-50/40 hover:bg-gold-50/70" : "hover:bg-white/70"}`}>
-                    <Link
-                      className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5"
-                      href={c.type === "dm" ? `/ai-friends/dm/${c.id.replace("dm-", "")}` : `/ai-friends/${c.id}`}
-                    >
-                      {c.type === "group" ? (
-                        <GroupAvatarStack accent={c.accent} friends={c.configuredFriends} groupId={c.id} />
-                      ) : (
-                        <AvatarCircle avatar={c.configuredFriends[0]?.avatar} emoji={c.configuredFriends[0]?.emoji} className="h-10 w-10 text-sm" color={c.accent} label={c.name} />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            {isPinned && <Pin size={11} className="shrink-0 text-gold-500" />}
-                            <h2 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">{c.name}</h2>
-                          </div>
-                          <span className="mt-0.5 shrink-0 text-[11px] text-ink-faint">{c.lastTime || ""}</span>
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <p className="min-w-0 flex-1 truncate text-[13px] leading-5 text-ink-soft">{c.lastMessage}</p>
-                          {c.unread > 0 && <span className="manor-badge">{c.unread}</span>}
-                        </div>
-                        {c.friendLine ? <p className="mt-0.5 truncate text-[11px] leading-4 text-ink-faint">{c.friendLine}</p> : null}
+                  <Link
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 active:bg-manor-100 ${
+                      isPinned ? "bg-gold-50/30" : ""
+                    }`}
+                    href={c.type === "dm" ? `/ai-friends/dm/${c.id.replace("dm-", "")}` : `/ai-friends/${c.id}`}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setMenuTarget(menuTarget === c.id ? null : c.id);
+                    }}
+                  >
+                    {/* 1. 头像 */}
+                    {c.type === "group" ? (
+                      <GroupAvatarStack accent={c.accent} friends={c.configuredFriends} groupId={c.id} size="sm" />
+                    ) : (
+                      <AvatarCircle avatar={c.configuredFriends[0]?.avatar} emoji={c.configuredFriends[0]?.emoji} className="h-11 w-11 text-sm" color={c.accent} label={c.name} />
+                    )}
+
+                    {/* 主体 */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        {/* 2. 名称 */}
+                        <h2 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">
+                          {isPinned && <Pin size={10} className="inline mr-1 text-gold-500 -translate-y-px" />}
+                          {c.name}
+                        </h2>
+                        {/* 4. 时间 */}
+                        {c.lastTime ? (
+                          <span className="shrink-0 text-[11px] text-ink-faint">{c.lastTime}</span>
+                        ) : null}
                       </div>
-                    </Link>
-
-                    {/* 长按 / 点击 More 菜单 */}
-                    <div className="relative flex shrink-0 items-center pr-1">
-                      <button
-                        className="grid h-8 w-8 place-items-center rounded-full text-ink-faint/30 transition hover:bg-manor-100 hover:text-ink-muted sm:opacity-0 sm:group-hover:opacity-100"
-                        onClick={(e) => { e.preventDefault(); setMenuTarget(menuTarget === c.id ? null : c.id); }}
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        {/* 3. 最后一条消息 */}
+                        <p className="min-w-0 flex-1 truncate text-[13px] leading-5 text-ink-soft">{c.lastMessage}</p>
+                        {/* 5. 未读数 */}
+                        {c.unread > 0 && <span className="manor-badge">{c.unread}</span>}
+                      </div>
                     </div>
-                  </div>
+                  </Link>
 
-                  {/* 弹出菜单 */}
+                  {/* 右键/长按菜单 */}
                   {menuTarget === c.id && (
                     <>
                       <div className="fixed inset-0 z-30" onClick={() => setMenuTarget(null)} />
-                      <div className="absolute right-3 top-9 z-40 w-32 overflow-hidden rounded-[14px] bg-cream/97 shadow-manor-lg border border-gold-200/20 backdrop-blur-2xl animate-fade-up py-1">
+                      <div className="absolute right-4 top-10 z-40 w-32 overflow-hidden rounded-[14px] bg-cream/97 shadow-manor-lg border border-gold-200/20 backdrop-blur-2xl animate-fade-up py-1">
                         <button
                           className="flex items-center gap-2 h-9 w-full px-3.5 text-[12px] text-ink hover:bg-manor-100"
                           onClick={() => togglePin(c)}
@@ -324,6 +326,9 @@ export function AIFriendsInbox() {
                       </div>
                     </>
                   )}
+
+                  {/* 淡分割线 */}
+                  <div className="mx-4 border-b border-black/[0.03]" />
                 </div>
               );
             })}
