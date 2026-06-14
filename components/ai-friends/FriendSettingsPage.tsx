@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, MessageCircle, RotateCcw } from "lucide-react";
-import { type AIFriend, defaultFriends, getDefaultFriendTemplate } from "@/lib/ai/friendGroup";
+import { ArrowLeft, Camera, Check, MessageCircle, RotateCcw, X } from "lucide-react";
+import { type AIFriend, getDefaultFriendTemplate } from "@/lib/ai/friendGroup";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { readStoredAIFriend, updateStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
 
@@ -20,12 +20,10 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // 量化数值
   const [metrics, setMetrics] = useState<Record<string, number>>({});
-  // 文本字段
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
-  const [emoji, setEmoji] = useState("");
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [personality, setPersonality] = useState("");
   const [style, setStyle] = useState("");
   const [job, setJob] = useState("");
@@ -39,7 +37,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
       setFriend(f);
       setName(f.name);
       setTitle(f.title);
-      setEmoji(f.emoji || "");
+      setAvatar(f.avatar);
       setPersonality(f.personality);
       setStyle(f.style);
       setJob(f.job);
@@ -70,11 +68,69 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
     setSaved(false);
   }
 
+  function pickAvatar() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const url = await compressAndReadImage(file);
+        setAvatar(url);
+        setSaved(false);
+      } catch (e) {
+        window.alert(e instanceof Error ? e.message : "处理失败");
+      }
+    };
+    input.click();
+  }
+
+  async function compressAndReadImage(file: File): Promise<string> {
+    if (!file.type.startsWith("image/")) throw new Error("请选择图片文件");
+    if (file.size > 4 * 1024 * 1024) throw new Error("图片太大，4MB 以内");
+
+    const src = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
+      r.onerror = () => reject(new Error("失败"));
+      r.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("解析失败"));
+      i.src = src;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 200;
+    const ctx = canvas.getContext("2d")!;
+    const side = Math.min(img.width, img.height);
+    ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 200, 200);
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.8));
+    if (!blob) return canvas.toDataURL("image/jpeg", 0.8);
+
+    return new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
+      r.onerror = () => reject(new Error("失败"));
+      r.readAsDataURL(blob);
+    });
+  }
+
+  function removeAvatar() {
+    setAvatar(undefined);
+    setSaved(false);
+  }
+
   function saveAll() {
     updateStoredAIFriend(friendId, {
       name: name.trim() || friend!.name,
       title: title.trim() || friend!.title,
-      emoji: emoji.trim() || friend!.emoji,
+      avatar: avatar ?? friend!.avatar,
       personality: personality.trim() || friend!.personality,
       style: style.trim() || friend!.style,
       job: job.trim() || friend!.job,
@@ -88,12 +144,15 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
 
   function resetAll() {
     const fallback = getDefaultFriendTemplate(friendId);
-    setName(fallback.name); setTitle(fallback.title); setEmoji(fallback.emoji || "");
+    setName(fallback.name); setTitle(fallback.title); setAvatar(fallback.avatar);
     setPersonality(fallback.personality); setStyle(fallback.style); setJob(fallback.job);
     setCareFocus(fallback.careFocus); setQuirks(fallback.quirks); setBoundaries(fallback.boundaries);
     setMetrics(getFriendMetrics(fallback));
     setSaved(false);
   }
+
+  const displayAvatar = avatar !== undefined ? avatar : friend.avatar;
+  const displayEmoji = displayAvatar ? undefined : friend.emoji;
 
   return (
     <main className="app-backdrop h-dvh overflow-hidden">
@@ -104,9 +163,9 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
             <Link className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-manor-100" href="/ai-friends/people">
               <ArrowLeft size={19} />
             </Link>
-            <AvatarCircle avatar={friend.avatar} emoji={friend.emoji} className="h-9 w-9 text-sm" color={friend.color} label={friend.name} />
+            <AvatarCircle avatar={displayAvatar} emoji={displayEmoji} className="h-9 w-9 text-sm" color={friend.color} label={name || friend.name} />
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">{friend.name}</h1>
+              <h1 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">{name || friend.name}</h1>
               <p className="truncate text-[11px] text-ink-muted">朋友设定</p>
             </div>
             <Link className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-ink-soft shadow-sm hover:bg-manor-100" href={`/ai-friends/dm/${friend.id}`}>
@@ -117,16 +176,37 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
 
         <section className="soft-scrollbar min-h-0 flex-1 overflow-y-auto bg-white/60">
 
-          {/* 基本 */}
+          {/* 头像 */}
           <div className="border-b border-gold-200/20 px-4 py-4">
-            <div className="flex items-center gap-3 mb-3">
-              <AvatarCircle avatar={friend.avatar} emoji={emoji || friend.emoji} className="h-12 w-12 text-sm ring-2 ring-white" color={friend.color} label={name || friend.name} />
-              <div className="min-w-0 flex-1 space-y-2">
-                <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} placeholder="名字" value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} />
-                <input className="manor-input w-full px-3 py-2 text-[13px]" maxLength={40} placeholder="一句话标题" value={title} onChange={(e) => { setTitle(e.target.value); setSaved(false); }} />
+            <div className="flex items-center gap-4">
+              <button className="relative shrink-0" onClick={pickAvatar} title="更换头像">
+                <AvatarCircle
+                  avatar={displayAvatar}
+                  emoji={displayEmoji}
+                  className="h-16 w-16 text-xl ring-[3px] ring-white shadow-md"
+                  color={friend.color}
+                  label={name || friend.name}
+                />
+                <span className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full bg-sage-500 text-white shadow-sm ring-2 ring-white">
+                  <Camera size={12} />
+                </span>
+              </button>
+              <div>
+                <p className="font-semibold text-ink-deep">点击更换头像</p>
+                <p className="mt-0.5 text-xs text-ink-muted">支持 PNG / JPEG / WebP</p>
+                {displayAvatar && (
+                  <button className="mt-1 text-[11px] text-rose-500 hover:text-rose-600" onClick={removeAvatar}>移除头像</button>
+                )}
               </div>
             </div>
-            <input className="manor-input w-full px-3 py-2 text-[14px] text-center" maxLength={4} placeholder="emoji" value={emoji} onChange={(e) => { setEmoji(e.target.value); setSaved(false); }} />
+          </div>
+
+          {/* 基本信息 */}
+          <div className="border-b border-gold-200/20 px-4 py-4">
+            <div className="space-y-2.5">
+              <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} placeholder="名字" value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} />
+              <input className="manor-input w-full px-3 py-2 text-[13px]" maxLength={40} placeholder="一句话标题" value={title} onChange={(e) => { setTitle(e.target.value); setSaved(false); }} />
+            </div>
           </div>
 
           {/* 量化指标 */}
@@ -185,14 +265,12 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
   );
 }
 
-/** 根据朋友性格推测量化指标 */
 function getFriendMetrics(f: AIFriend): Record<string, number> {
-  const name = (f.name + f.title + f.personality + f.job + f.careFocus + f.quirks).toLowerCase();
-  const text = (f.id + name).toLowerCase();
+  const text = (f.name + f.title + f.personality + f.job + f.careFocus + f.quirks + f.id).toLowerCase();
 
   let warmth = 50, sharpness = 50, analysis = 50, action = 50, caution = 50;
 
-  if (text.includes("nana") || text.includes("温柔") || text.includes("接住")) warmth = 85;
+  if (text.includes("nana") || text.includes("娜娜") || text.includes("温柔") || text.includes("接住")) warmth = 85;
   if (text.includes("软") || text.includes("安慰")) warmth = Math.max(warmth, 75);
   if (text.includes("kai") || text.includes("凯凯") || text.includes("嘴欠") || text.includes("吐槽")) sharpness = 85;
   if (text.includes("lin") || text.includes("博士") || text.includes("分析") || text.includes("拆")) analysis = 85;
