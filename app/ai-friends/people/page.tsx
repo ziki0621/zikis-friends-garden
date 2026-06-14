@@ -43,6 +43,7 @@ export default function PeoplePage() {
             <div className="flex items-center gap-4">
               <AvatarCircle
                 avatar={profile.avatar}
+                emoji={profile.emoji}
                 className="h-14 w-14 text-base shadow-md ring-[3px] ring-white"
                 color={profile.color}
                 label={profile.name}
@@ -71,6 +72,7 @@ export default function PeoplePage() {
                 >
                   <AvatarCircle
                     avatar={f.avatar}
+                    emoji={f.emoji}
                     className="h-12 w-12 text-sm shadow-sm ring-2 ring-white"
                     color={f.color}
                     label={f.name}

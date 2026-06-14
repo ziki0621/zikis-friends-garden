@@ -17,7 +17,7 @@ import {
   getGroupAvatar, setGroupAvatar, removeGroupAvatar
 } from "@/components/ai-friends/groupAvatarStorage";
 
-type EditField = keyof Pick<AIFriend, "name" | "title" | "relationship" | "personality" | "style" | "job" | "careFocus" | "quirks" | "boundaries" | "color" | "avatar">;
+type EditField = keyof Pick<AIFriend, "name" | "title" | "relationship" | "personality" | "style" | "job" | "careFocus" | "quirks" | "boundaries" | "color" | "avatar" | "emoji">;
 
 export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
   const [settings, setSettings] = useState<FriendSettingsMap>({});
@@ -148,7 +148,7 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
           <div className="border-b border-gold-200/20 px-4 py-4">
             <div className="flex items-center gap-3">
               <button className="relative shrink-0" onClick={() => pickAvatar((url) => { updateProfile("avatar", url); writeUserProfile({ ...userProfile, avatar: url }); setSaved(true); })}>
-                <AvatarCircle avatar={userProfile.avatar} className="h-12 w-12 text-sm ring-2 ring-white" color={userProfile.color} label={userProfile.name} />
+                <AvatarCircle avatar={userProfile.avatar} emoji={userProfile.emoji} className="h-12 w-12 text-sm ring-2 ring-white" color={userProfile.color} label={userProfile.name} />
                 <span className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full bg-sage-500 text-white shadow-sm ring-2 ring-white">
                   <Camera size={10} />
                 </span>
@@ -157,7 +157,16 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
                 <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} value={userProfile.name} onChange={(e) => updateProfile("name", e.target.value)} />
                 <input className="manor-input mt-2 w-full px-3 py-2 text-[13px]" maxLength={28} value={userProfile.title} onChange={(e) => updateProfile("title", e.target.value)} />
               </div>
-              <input aria-label="头像底色" className="h-9 w-9 shrink-0 rounded-full border-0 bg-transparent cursor-pointer" type="color" value={userProfile.color} onChange={(e) => updateProfile("color", e.target.value)} />
+              <div className="flex flex-col items-center gap-1.5">
+                <input aria-label="头像底色" className="h-8 w-8 shrink-0 rounded-full border-0 bg-transparent cursor-pointer" type="color" value={userProfile.color} onChange={(e) => updateProfile("color", e.target.value)} />
+                <input
+                  aria-label="头像表情"
+                  className="h-8 w-8 shrink-0 rounded-full border border-manor-200 bg-manor-50 text-center text-[14px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-300"
+                  maxLength={4}
+                  value={userProfile.emoji || "🏠"}
+                  onChange={(e) => { updateProfile("emoji", e.target.value); writeUserProfile({ ...userProfile, emoji: e.target.value }); setSaved(true); }}
+                />
+              </div>
             </div>
             {userProfile.avatar && <button className="ml-[60px] mt-2 text-[11px] text-ink-muted hover:text-rose-500" onClick={() => { const p = { ...userProfile }; delete p.avatar; setUserProfile(p); writeUserProfile(p); setSaved(true); }}>移除头像</button>}
             <label className="mt-3 block text-[11px] font-semibold text-ink-muted">我的状态<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={160} value={userProfile.about} onChange={(e) => updateProfile("about", e.target.value)} /></label>
@@ -193,13 +202,22 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
               <section key={friend.id} className="px-4 py-4">
                 <div className="flex items-center gap-3">
                   <button className="relative shrink-0" onClick={() => pickAvatar((url) => { const next = draftFriends.map((f, i) => i === index ? { ...f, avatar: url } : f); setDraftFriends(next); writeFriendSettings({ ...settings, [group.id]: next }); setSettings({ ...settings, [group.id]: next }); setSaved(true); })}>
-                    <AvatarCircle avatar={friend.avatar} className="h-11 w-11 text-sm ring-2 ring-white" color={friend.color} label={friend.name} />
+                    <AvatarCircle avatar={friend.avatar} emoji={friend.emoji} className="h-11 w-11 text-sm ring-2 ring-white" color={friend.color} label={friend.name} />
                   </button>
                   <div className="min-w-0 flex-1">
                     <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} value={friend.name} onChange={(e) => updateDraft(index, "name", e.target.value)} />
                     <input className="manor-input mt-2 w-full px-3 py-2 text-[13px]" maxLength={28} value={friend.title} onChange={(e) => updateDraft(index, "title", e.target.value)} />
                   </div>
-                  <input aria-label="头像底色" className="h-9 w-9 shrink-0 rounded-full border-0 bg-transparent cursor-pointer" type="color" value={friend.color} onChange={(e) => updateDraft(index, "color", e.target.value)} />
+                  <div className="flex flex-col items-center gap-1.5">
+                    <input aria-label="头像底色" className="h-8 w-8 shrink-0 rounded-full border-0 bg-transparent cursor-pointer" type="color" value={friend.color} onChange={(e) => updateDraft(index, "color", e.target.value)} />
+                    <input
+                      aria-label="头像表情"
+                      className="h-8 w-8 shrink-0 rounded-full border border-manor-200 bg-manor-50 text-center text-[14px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-300"
+                      maxLength={4}
+                      value={friend.emoji || "🧩"}
+                      onChange={(e) => updateDraft(index, "emoji", e.target.value)}
+                    />
+                  </div>
                 </div>
                 {friend.avatar && <button className="ml-[56px] mt-2 text-[11px] text-ink-muted hover:text-rose-500" onClick={() => { const next = draftFriends.map((f, i) => { if (i !== index) return f; const n = { ...f }; delete n.avatar; return n; }); setDraftFriends(next); writeFriendSettings({ ...settings, [group.id]: next }); setSettings({ ...settings, [group.id]: next }); setSaved(true); }}>移除头像</button>}
 

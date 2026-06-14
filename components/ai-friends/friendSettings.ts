@@ -12,6 +12,7 @@ export type UserProfile = {
   chatStyle: string;
   color: string;
   avatar?: string;
+  emoji?: string;
 };
 
 export const defaultUserProfile: UserProfile = {
@@ -19,7 +20,8 @@ export const defaultUserProfile: UserProfile = {
   title: "群主",
   about: "正在和 AI 朋友一起聊天，想要自然、有分寸的陪伴。",
   chatStyle: "喜欢朋友像真实群聊一样自然接话，不要太像客服。",
-  color: "#95EC69"
+  color: "#95EC69",
+  emoji: "🏠"
 };
 
 export function readFriendSettings(): FriendSettingsMap {

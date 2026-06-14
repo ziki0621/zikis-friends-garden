@@ -406,7 +406,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
                     {item.quote && <Q quote={item.quote} variant="user" />}
                     {item.content}
                   </div>
-                  <AvatarCircle avatar={userProfile.avatar} className="mt-4 h-8 w-8 text-[13px]" color={userProfile.color} label={userProfile.name} />
+                  <AvatarCircle avatar={userProfile.avatar} emoji={userProfile.emoji} className="mt-4 h-8 w-8 text-[13px]" color={userProfile.color} label={userProfile.name} />
                 </div>
               );
             }
@@ -421,7 +421,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
                 className={`flex items-start gap-2 ${item.isNew ? "animate-message-in" : ""}`}
                 onContextMenu={(e) => ctxMenu(e, { id: item.id, speaker: dn, content: item.content }, true)}
               >
-                <AvatarCircle avatar={df?.avatar} className="mt-4 h-8 w-8 text-[13px]" color={dc} label={dn} />
+                <AvatarCircle avatar={df?.avatar} emoji={df?.emoji} className="mt-4 h-8 w-8 text-[13px]" color={dc} label={dn} />
                 <div className="min-w-0 max-w-[74%]">
                   <div className="mb-1 flex flex-wrap items-center gap-2 px-1">
                     <span className="text-[11px] font-semibold text-ink-soft">{dn}</span>

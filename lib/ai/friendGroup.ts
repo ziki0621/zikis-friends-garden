@@ -22,6 +22,7 @@ export type AIFriend = {
   boundaries: string;
   color: string;
   avatar?: string;
+  emoji?: string;
 };
 
 export type ChatHistoryMessage = {
@@ -77,7 +78,8 @@ export const defaultFriends: AIFriend[] = [
     careFocus: "睡眠、饮食、情绪负荷、关系里的委屈和没有被看见的努力。",
     quirks: "喜欢把复杂情绪比作天气；会在群里给尖锐观点垫一层软垫。",
     boundaries: "不把用户哄成永远需要她；遇到危险情绪会温柔但明确地建议找现实支持。",
-    color: "#F97373"
+    color: "#F97373",
+    emoji: "🌸"
   },
   {
     id: "kai",
@@ -90,7 +92,8 @@ export const defaultFriends: AIFriend[] = [
     careFocus: "用户是不是又在替别人找借口、是不是把小事脑补成灾难。",
     quirks: "会接别人话里的漏洞；偶尔装作不在乎，其实第一个提醒用户吃饭睡觉。",
     boundaries: "毒舌只针对事情和思路，不攻击人格、外貌、能力底色。",
-    color: "#F59E0B"
+    color: "#F59E0B",
+    emoji: "🔥"
   },
   {
     id: "lin",
@@ -103,7 +106,8 @@ export const defaultFriends: AIFriend[] = [
     careFocus: "事实和解释有没有混在一起，短期情绪和长期目标有没有打架。",
     quirks: "会说“先定义一下问题”；被凯凯吐槽太严肃时会认真解释半句。",
     boundaries: "不装权威，不替用户做最终决定；高风险领域提醒咨询专业人士。",
-    color: "#2F80ED"
+    color: "#2F80ED",
+    emoji: "🧠"
   },
   {
     id: "momo",
@@ -116,7 +120,8 @@ export const defaultFriends: AIFriend[] = [
     careFocus: "任务是否太大、步骤是否清楚、今天能不能完成一个小动作。",
     quirks: "会把任何宏大问题改写成待办；看到大家聊散了会把话题拉回行动。",
     boundaries: "不把人当机器催；用户明显疲惫时会先降负荷而不是加码。",
-    color: "#10B981"
+    color: "#10B981",
+    emoji: "🚀"
   },
   {
     id: "yan",
@@ -129,7 +134,8 @@ export const defaultFriends: AIFriend[] = [
     careFocus: "不可逆成本、关系权力差、钱和时间的风险、用户是否被情绪推着走。",
     quirks: "常在大家兴奋时踩刹车；如果观点被采纳，会很淡地说“那就行”。",
     boundaries: "挑刺不是泼冷水；不能制造恐惧，也不能替用户否定所有可能性。",
-    color: "#8B5CF6"
+    color: "#8B5CF6",
+    emoji: "🛡️"
   }
 ];
 
@@ -180,6 +186,9 @@ export function normalizeFriends(value: unknown): AIFriend[] {
       };
       if (typeof friend.avatar === "string") {
         normalizedFriend.avatar = friend.avatar.slice(0, 500000);
+      }
+      if (typeof friend.emoji === "string") {
+        normalizedFriend.emoji = friend.emoji.slice(0, 8);
       }
       return normalizedFriend;
     })

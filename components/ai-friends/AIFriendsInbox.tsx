@@ -283,7 +283,7 @@ export function AIFriendsInbox() {
                       {c.type === "group" ? (
                         <GroupAvatarStack accent={c.accent} friends={c.configuredFriends} groupId={c.id} />
                       ) : (
-                        <AvatarCircle avatar={c.configuredFriends[0]?.avatar} className="h-10 w-10 text-sm" color={c.accent} label={c.name} />
+                        <AvatarCircle avatar={c.configuredFriends[0]?.avatar} emoji={c.configuredFriends[0]?.emoji} className="h-10 w-10 text-sm" color={c.accent} label={c.name} />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
