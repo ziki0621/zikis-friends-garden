@@ -105,14 +105,14 @@ export function AIFriendsInbox() {
       type: "dm" as const,
       name: friend.name,
       description: friend.title,
-      lastMessage: "私聊",
+      lastMessage: friend.title,
       lastTime: "",
       unread: getUnread(`dm-${friend.id}`),
       accent: friend.color,
       style: `一对一私聊 · ${friend.relationship}`,
       friends: [friend],
       configuredFriends: [friend],
-      friendLine: friend.title,
+      friendLine: "",
       lastActivity: getLastActivity(`dm-${friend.id}`)
     }));
 
@@ -280,7 +280,7 @@ export function AIFriendsInbox() {
                           <p className="min-w-0 flex-1 truncate text-[13px] leading-5 text-ink-soft">{c.lastMessage}</p>
                           {c.unread > 0 && <span className="manor-badge">{c.unread}</span>}
                         </div>
-                        <p className="mt-0.5 truncate text-[11px] leading-4 text-ink-faint">{c.type === "dm" ? "私聊" : c.friendLine}</p>
+                        {c.friendLine ? <p className="mt-0.5 truncate text-[11px] leading-4 text-ink-faint">{c.friendLine}</p> : null}
                       </div>
                     </Link>
 

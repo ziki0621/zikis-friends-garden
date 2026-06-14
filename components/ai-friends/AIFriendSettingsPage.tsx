@@ -9,22 +9,20 @@ import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { GroupAvatarStack } from "@/components/ai-friends/GroupAvatarStack";
 import { readVisibleAIFriends } from "@/components/ai-friends/aiFriendRosterStorage";
 import {
-  defaultUserProfile, type FriendSettingsMap, type UserProfile,
-  getConfiguredFriends, readFriendSettings, readUserProfile,
-  writeFriendSettings, writeUserProfile
+  type FriendSettingsMap,
+  getConfiguredFriends,
+  readFriendSettings,
+  writeFriendSettings
 } from "@/components/ai-friends/friendSettings";
 import {
   getGroupAvatar, setGroupAvatar, removeGroupAvatar
 } from "@/components/ai-friends/groupAvatarStorage";
 import { wallpapers, getWallpaper, setWallpaper, type WallpaperId } from "@/components/ai-friends/wallpaperStorage";
 
-type EditField = keyof Pick<AIFriend, "name" | "title" | "relationship" | "personality" | "style" | "job" | "careFocus" | "quirks" | "boundaries" | "color" | "avatar" | "emoji">;
-
 export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
   const [settings, setSettings] = useState<FriendSettingsMap>({});
   const [draftFriends, setDraftFriends] = useState<AIFriend[]>(group.friends);
   const [availableFriends, setAvailableFriends] = useState<AIFriend[]>(group.friends);
-  const [userProfile, setUserProfile] = useState<UserProfile>(defaultUserProfile);
   const [saved, setSaved] = useState(false);
   const [groupAvatarUrl, setGroupAvatarUrl] = useState<string | undefined>();
   const [activeWallpaper, setActiveWallpaper] = useState<WallpaperId>("garden");
@@ -35,28 +33,24 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
     setSettings(stored);
     setDraftFriends(getConfiguredFriends(group.id, group.friends, stored).map((f) => ({ ...f })));
     setAvailableFriends(roster.length > 0 ? roster : group.friends);
-    setUserProfile(readUserProfile());
     setGroupAvatarUrl(getGroupAvatar(group.id));
     setActiveWallpaper(getWallpaper());
   }, [group]);
 
   const previewLine = useMemo(() => draftFriends.map((f) => f.name).join("、"), [draftFriends]);
 
-  function updateDraft(index: number, field: EditField, value: string) { setSaved(false); setDraftFriends((c) => c.map((f, i) => i === index ? { ...f, [field]: value } : f)); }
-  function updateProfile(field: keyof UserProfile, value: string) { setSaved(false); setUserProfile((c) => ({ ...c, [field]: value })); }
-
   function saveSettings() {
     if (draftFriends.length === 0) { window.alert("至少保留一个朋友。"); return; }
-    setSettings({ ...settings, [group.id]: draftFriends });
-    writeFriendSettings({ ...settings, [group.id]: draftFriends });
-    writeUserProfile(userProfile);
+    const next = { ...settings, [group.id]: draftFriends };
+    setSettings(next);
+    writeFriendSettings(next);
     setSaved(true);
   }
 
   function resetSettings() {
     const next = { ...settings }; delete next[group.id];
-    setSettings(next); writeFriendSettings(next); writeUserProfile(defaultUserProfile);
-    setDraftFriends(group.friends.map((f) => ({ ...f }))); setUserProfile(defaultUserProfile); setSaved(true);
+    setSettings(next); writeFriendSettings(next);
+    setDraftFriends(group.friends.map((f) => ({ ...f }))); setSaved(true);
   }
 
   function toggleFriend(friend: AIFriend) {
@@ -68,7 +62,6 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
     });
   }
 
-  /* ── avatar upload ── */
   function pickAvatar(onDone: (dataUrl: string) => void) {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/png,image/jpeg,image/webp";
@@ -114,7 +107,9 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
 
         <header className="sticky top-0 z-10 border-b border-gold-200/20 bg-cream-warm/95 backdrop-blur-2xl px-3 py-2.5">
           <div className="flex items-center gap-3">
-            <Link className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-manor-100" href="/ai-friends"><ArrowLeft size={19} /></Link>
+            <Link className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-manor-100" href="/ai-friends">
+              <ArrowLeft size={19} />
+            </Link>
             <GroupAvatarStack accent={group.accent} friends={draftFriends} size="sm" groupId={group.id} />
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">{group.name}</h1>
@@ -147,83 +142,6 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
             </div>
           </div>
 
-          {/* 聊天背景 */}
-          <div className="border-b border-gold-200/20 px-4 py-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[14px] font-semibold text-ink-deep">聊天背景</h2>
-              <span className="rounded-full bg-manor-100 px-2 py-0.5 text-[10px] font-semibold text-ink-muted">4 种</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              {wallpapers.map((wp) => {
-                const active = activeWallpaper === wp.id;
-                return (
-                  <button
-                    key={wp.id}
-                    className={`rounded-[14px] border p-3 text-left transition-all ${
-                      active
-                        ? "border-sage-400 bg-sage-50 shadow-[inset_0_0_0_1px_rgba(125,155,118,0.2)]"
-                        : "border-manor-200 bg-white hover:border-gold-300"
-                    }`}
-                    onClick={() => {
-                      setWallpaper(wp.id);
-                      setActiveWallpaper(wp.id);
-                      window.dispatchEvent(new Event("wallpaper-changed"));
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xl">{wp.emoji}</span>
-                      <span className="text-[13px] font-semibold text-ink-deep">{wp.label}</span>
-                      {active && <span className="ml-auto text-[10px] text-sage-500 font-semibold">使用中</span>}
-                    </div>
-                    {/* 微缩预览 */}
-                    <div
-                      className={`mt-2 h-10 rounded-[8px] border border-black/[0.03] ${
-                        wp.id === "garden" ? "bg-[#f8f4ec]" :
-                        wp.id === "linen" ? "bg-[#f6f2e9]" :
-                        wp.id === "stars" ? "bg-[#efe8d8]" :
-                        "bg-[#f7f3ec]"
-                      }`}
-                      style={
-                        wp.id === "garden" ? { backgroundImage: "radial-gradient(circle at 20% 40%, rgba(184,150,62,0.05) 0, transparent 8px), radial-gradient(circle at 70% 30%, rgba(184,150,62,0.04) 0, transparent 6px)" } :
-                        wp.id === "linen" ? { backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180,160,130,0.03) 2px, rgba(180,160,130,0.03) 3px)" } :
-                        wp.id === "stars" ? { backgroundImage: "radial-gradient(circle at 30% 30%, rgba(140,130,110,0.06) 0, transparent 2px), radial-gradient(circle at 60% 40%, rgba(140,130,110,0.04) 0, transparent 1.5px)" } :
-                        {}
-                      }
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 我的资料 */}
-          <div className="border-b border-gold-200/20 px-4 py-4">
-            <div className="flex items-center gap-3">
-              <button className="relative shrink-0" onClick={() => pickAvatar((url) => { updateProfile("avatar", url); writeUserProfile({ ...userProfile, avatar: url }); setSaved(true); })}>
-                <AvatarCircle avatar={userProfile.avatar} emoji={userProfile.emoji} className="h-12 w-12 text-sm ring-2 ring-white" color={userProfile.color} label={userProfile.name} />
-                <span className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full bg-sage-500 text-white shadow-sm ring-2 ring-white">
-                  <Camera size={10} />
-                </span>
-              </button>
-              <div className="min-w-0 flex-1">
-                <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} value={userProfile.name} onChange={(e) => updateProfile("name", e.target.value)} />
-                <input className="manor-input mt-2 w-full px-3 py-2 text-[13px]" maxLength={28} value={userProfile.title} onChange={(e) => updateProfile("title", e.target.value)} />
-              </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <input aria-label="头像底色" className="h-8 w-8 shrink-0 rounded-full border-0 bg-transparent cursor-pointer" type="color" value={userProfile.color} onChange={(e) => updateProfile("color", e.target.value)} />
-                <input
-                  aria-label="头像表情"
-                  className="h-8 w-8 shrink-0 rounded-full border border-manor-200 bg-manor-50 text-center text-[14px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-300"
-                  maxLength={4}
-                  value={userProfile.emoji || "🏠"}
-                  onChange={(e) => { updateProfile("emoji", e.target.value); writeUserProfile({ ...userProfile, emoji: e.target.value }); setSaved(true); }}
-                />
-              </div>
-            </div>
-            {userProfile.avatar && <button className="ml-[60px] mt-2 text-[11px] text-ink-muted hover:text-rose-500" onClick={() => { const p = { ...userProfile }; delete p.avatar; setUserProfile(p); writeUserProfile(p); setSaved(true); }}>移除头像</button>}
-            <label className="mt-3 block text-[11px] font-semibold text-ink-muted">我的状态<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={160} value={userProfile.about} onChange={(e) => updateProfile("about", e.target.value)} /></label>
-          </div>
-
           {/* 群成员 */}
           <div className="border-b border-gold-200/20 px-4 py-4">
             <div className="mb-3 flex items-center justify-between">
@@ -239,7 +157,7 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
                     className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-[13px] font-medium ring-1 transition ${selected ? "bg-sage-500 text-white ring-sage-500 shadow-manor-sage" : "bg-white text-ink-soft ring-manor-200 hover:ring-sage-300"}`}
                     onClick={() => toggleFriend(f)}
                   >
-                    <AvatarCircle avatar={f.avatar} className="h-6 w-6 text-[10px]" color={f.color} label={f.name} />
+                    <AvatarCircle avatar={f.avatar} emoji={f.emoji} className="h-6 w-6 text-[10px]" color={f.color} label={f.name} />
                     {f.name}
                   </button>
                 );
@@ -248,48 +166,49 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
             {draftFriends.length <= 1 && <p className="mt-2 text-[11px] text-ink-faint">至少保留一个朋友。</p>}
           </div>
 
-          {/* 朋友详情 */}
-          <div className="divide-y divide-gold-200/10">
-            {draftFriends.map((friend, index) => (
-              <section key={friend.id} className="px-4 py-4">
-                <div className="flex items-center gap-3">
-                  <button className="relative shrink-0" onClick={() => pickAvatar((url) => { const next = draftFriends.map((f, i) => i === index ? { ...f, avatar: url } : f); setDraftFriends(next); writeFriendSettings({ ...settings, [group.id]: next }); setSettings({ ...settings, [group.id]: next }); setSaved(true); })}>
-                    <AvatarCircle avatar={friend.avatar} emoji={friend.emoji} className="h-11 w-11 text-sm ring-2 ring-white" color={friend.color} label={friend.name} />
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} value={friend.name} onChange={(e) => updateDraft(index, "name", e.target.value)} />
-                    <input className="manor-input mt-2 w-full px-3 py-2 text-[13px]" maxLength={28} value={friend.title} onChange={(e) => updateDraft(index, "title", e.target.value)} />
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5">
-                    <input aria-label="头像底色" className="h-8 w-8 shrink-0 rounded-full border-0 bg-transparent cursor-pointer" type="color" value={friend.color} onChange={(e) => updateDraft(index, "color", e.target.value)} />
-                    <input
-                      aria-label="头像表情"
-                      className="h-8 w-8 shrink-0 rounded-full border border-manor-200 bg-manor-50 text-center text-[14px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-300"
-                      maxLength={4}
-                      value={friend.emoji || "🧩"}
-                      onChange={(e) => updateDraft(index, "emoji", e.target.value)}
+          {/* 聊天背景 */}
+          <div className="border-b border-gold-200/20 px-4 py-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[14px] font-semibold text-ink-deep">聊天背景</h2>
+              <span className="rounded-full bg-manor-100 px-2 py-0.5 text-[10px] font-semibold text-ink-muted">4 种</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {wallpapers.map((wp) => {
+                const active = activeWallpaper === wp.id;
+                return (
+                  <button
+                    key={wp.id}
+                    className={`rounded-[14px] border p-3 text-left transition-all ${active ? "border-sage-400 bg-sage-50 shadow-[inset_0_0_0_1px_rgba(125,155,118,0.2)]" : "border-manor-200 bg-white hover:border-gold-300"}`}
+                    onClick={() => {
+                      setWallpaper(wp.id);
+                      setActiveWallpaper(wp.id);
+                      window.dispatchEvent(new Event("wallpaper-changed"));
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl">{wp.emoji}</span>
+                      <span className="text-[13px] font-semibold text-ink-deep">{wp.label}</span>
+                      {active && <span className="ml-auto text-[10px] text-sage-500 font-semibold">使用中</span>}
+                    </div>
+                    <div
+                      className={`mt-2 h-10 rounded-[8px] border border-black/[0.03] ${wp.id === "garden" ? "bg-[#f8f4ec]" : wp.id === "linen" ? "bg-[#f6f2e9]" : wp.id === "stars" ? "bg-[#efe8d8]" : "bg-[#f7f3ec]"}`}
                     />
-                  </div>
-                </div>
-                {friend.avatar && <button className="ml-[56px] mt-2 text-[11px] text-ink-muted hover:text-rose-500" onClick={() => { const next = draftFriends.map((f, i) => { if (i !== index) return f; const n = { ...f }; delete n.avatar; return n; }); setDraftFriends(next); writeFriendSettings({ ...settings, [group.id]: next }); setSettings({ ...settings, [group.id]: next }); setSaved(true); }}>移除头像</button>}
-
-                <label className="mt-3 block text-[11px] font-semibold text-ink-muted">关系定位<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.relationship} onChange={(e) => updateDraft(index, "relationship", e.target.value)} /></label>
-                <label className="mt-2 block text-[11px] font-semibold text-ink-muted">性格底色<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.personality} onChange={(e) => updateDraft(index, "personality", e.target.value)} /></label>
-                <label className="mt-2 block text-[11px] font-semibold text-ink-muted">说话风格<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.style} onChange={(e) => updateDraft(index, "style", e.target.value)} /></label>
-                <label className="mt-2 block text-[11px] font-semibold text-ink-muted">群内分工<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.job} onChange={(e) => updateDraft(index, "job", e.target.value)} /></label>
-                <label className="mt-2 block text-[11px] font-semibold text-ink-muted">在意的事<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.careFocus} onChange={(e) => updateDraft(index, "careFocus", e.target.value)} /></label>
-                <label className="mt-2 block text-[11px] font-semibold text-ink-muted">小习惯<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.quirks} onChange={(e) => updateDraft(index, "quirks", e.target.value)} /></label>
-                <label className="mt-2 block text-[11px] font-semibold text-ink-muted">边界感<textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={friend.boundaries} onChange={(e) => updateDraft(index, "boundaries", e.target.value)} /></label>
-              </section>
-            ))}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
         <footer className="flex shrink-0 items-center justify-between border-t border-gold-200/20 bg-cream-warm/95 px-4 py-3 backdrop-blur-2xl">
-          <button className="inline-flex h-10 items-center gap-2 rounded-full px-3 text-[13px] font-medium text-ink-muted hover:bg-manor-100" onClick={resetSettings}><RotateCcw size={15} /> 恢复默认</button>
+          <button className="inline-flex h-10 items-center gap-2 rounded-full px-3 text-[13px] font-medium text-ink-muted hover:bg-manor-100" onClick={resetSettings}>
+            <RotateCcw size={15} /> 恢复默认
+          </button>
           <div className="flex items-center gap-3">
             {saved && <span className="text-xs font-semibold text-sage-600">已保存</span>}
-            <button className="manor-btn-primary inline-flex h-10 items-center gap-2 px-5 text-[13px]" onClick={saveSettings}><Check size={16} /> 保存</button>
+            <button className="manor-btn-primary inline-flex h-10 items-center gap-2 px-5 text-[13px]" onClick={saveSettings}>
+              <Check size={16} /> 保存
+            </button>
           </div>
         </footer>
       </div>

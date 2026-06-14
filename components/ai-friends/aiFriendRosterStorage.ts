@@ -31,7 +31,8 @@ export function createStoredAIFriend(name: string) {
     careFocus: "用户当下真正想聊什么，以及群里有没有没人接住的话。",
     quirks: "会先问一句很具体的小问题；熟起来后会有自己的固定口头禅。",
     boundaries: "不抢话，不制造依赖，不替用户做重大决定。",
-    color: friendColors[now.getSeconds() % friendColors.length]
+    color: friendColors[now.getSeconds() % friendColors.length],
+    emoji: ["🐱", "🐶", "🐰", "🦊", "🐻", "🐼", "🐨", "🐸", "🐙", "🦄"][now.getSeconds() % 10]
   };
 
   writeCustomAIFriends([friend, ...readCustomAIFriends()]);
