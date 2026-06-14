@@ -1,0 +1,10 @@
+.next
+node_modules
+.env
+.env*.local
+dist
+out
+*.tsbuildinfo
+dev-server.log
+dev-server.err.log
+*.output

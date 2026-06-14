@@ -1,0 +1,135 @@
+import { NextResponse } from "next/server";
+import {
+  buildFriendGroupPrompt,
+  buildUserPrompt,
+  coerceFriendGroupResponse,
+  estimateReplyPlan,
+  type InteractionType,
+  mockFriendGroupResponse,
+  normalizeFriends,
+  normalizeHistory,
+  normalizeMemoryContext,
+  normalizeMode,
+  parseJsonFromModel
+} from "@/lib/ai/friendGroup";
+import { callFriendModelJson, hasConfiguredFriendModel } from "@/lib/ai/openAICompatible";
+import { filterRelationsForFriends, normalizeFriendRelations } from "@/lib/ai/friendRelations";
+
+export const maxDuration = 30;
+
+type ChatRequest = {
+  message?: unknown;
+  history?: unknown;
+  friends?: unknown;
+  mode?: unknown;
+  groupStyle?: unknown;
+  memory?: unknown;
+  userState?: unknown;
+  interactionType?: unknown;
+  relations?: unknown;
+};
+
+export async function POST(request: Request) {
+  const body = (await request.json().catch(() => ({}))) as ChatRequest;
+  const message = typeof body.message === "string" ? body.message.trim().slice(0, 1200) : "";
+
+  if (!message) {
+    return NextResponse.json({ error: "message is required" }, { status: 400 });
+  }
+
+  const friends = normalizeFriends(body.friends);
+  const mode = normalizeMode(body.mode);
+  const history = normalizeHistory(body.history);
+  const memoryContext = normalizeMemoryContext(body.memory);
+  const relations = filterRelationsForFriends(normalizeFriendRelations(body.relations), friends);
+  const interactionType: InteractionType = body.interactionType === "ambient" ? "ambient" : "user";
+  const groupStyle = typeof body.groupStyle === "string" ? body.groupStyle.slice(0, 80) : "温柔治愈 + 热闹整活";
+  const userState = typeof body.userState === "string" ? body.userState.slice(0, 160) : "";
+  const baseReplyPlan =
+    interactionType === "ambient"
+      ? {
+          min: 1,
+          max: 3,
+          label: "群友基于上一条群友消息自然续聊，轻量接话后就停"
+        }
+      : estimateReplyPlan(message, mode);
+  const replyPlan =
+    friends.length === 1
+      ? {
+          ...baseReplyPlan,
+          min: Math.min(baseReplyPlan.min, 1),
+          max: Math.min(baseReplyPlan.max, 3),
+          label: `私聊场景，${baseReplyPlan.label}`
+        }
+      : baseReplyPlan;
+
+  if (!hasConfiguredFriendModel()) {
+    return NextResponse.json({
+      provider: "Local mock",
+      model: "mock",
+      usingMock: true,
+      warning: "Set AI_FRIENDS_API_KEY or DEEPSEEK_API_KEY to call a real OpenAI-compatible model.",
+      ...mockFriendGroupResponse(message, mode, friends, replyPlan)
+    });
+  }
+
+  const modelResult = await callFriendModelJson({
+    messages: [
+      {
+        role: "system",
+        content: buildFriendGroupPrompt({
+          friends,
+          groupStyle,
+          mode,
+          userState,
+          replyPlan,
+          memoryContext,
+          relations
+        })
+      },
+      {
+        role: "user",
+        content: buildUserPrompt({
+          message,
+          history,
+          memoryContext,
+          friends,
+          mode,
+          interactionType
+        })
+      }
+    ]
+  });
+
+  if (!modelResult.ok) {
+    return NextResponse.json(
+      {
+        error: modelResult.error,
+        provider: modelResult.provider,
+        model: modelResult.model
+      },
+      { status: modelResult.status ?? 502 }
+    );
+  }
+
+  const parsed = parseJsonFromModel(modelResult.content);
+  const normalized = coerceFriendGroupResponse(parsed, friends);
+
+  if (!normalized) {
+    return NextResponse.json({
+      provider: modelResult.provider,
+      model: modelResult.model,
+      usingMock: true,
+      warning: "模型刚才说话格式乱了一下，已切到本地兜底回复。",
+      ...mockFriendGroupResponse(message, mode, friends, replyPlan)
+    });
+  }
+
+  return NextResponse.json({
+    provider: modelResult.provider,
+    model: modelResult.model,
+    usingMock: false,
+    ...normalized,
+    messages: normalized.messages.slice(0, replyPlan.max)
+  });
+}
