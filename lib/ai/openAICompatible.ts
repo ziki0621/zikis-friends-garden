@@ -47,12 +47,14 @@ export async function callFriendModelJson({
   messages,
   temperature = 0.8,
   maxTokens = 2200,
-  userConfig
+  userConfig,
+  jsonMode = true
 }: {
   messages: ChatMessage[];
   temperature?: number;
   maxTokens?: number;
   userConfig?: { apiKey?: string; baseUrl?: string; model?: string; providerName?: string } | null;
+  jsonMode?: boolean;
 }): Promise<ModelJsonResult> {
   const config = getFriendModelConfig(userConfig);
 
@@ -79,9 +81,7 @@ export async function callFriendModelJson({
         messages,
         temperature,
         max_tokens: maxTokens,
-        response_format: {
-          type: "json_object"
-        }
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {})
       })
     });
 

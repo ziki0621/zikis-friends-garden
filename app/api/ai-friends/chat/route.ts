@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  buildFriendGroupPrompt,
-  buildUserPrompt,
   coerceFriendGroupResponse,
   estimateReplyPlan,
   type InteractionType,
@@ -10,12 +8,15 @@ import {
   normalizeHistory,
   normalizeMemoryContext,
   normalizeMode,
-  parseJsonFromModel
+  parseJsonFromModel,
+  buildFriendGroupPrompt,
+  buildUserPrompt
 } from "@/lib/ai/friendGroup";
 import { callFriendModelJson } from "@/lib/ai/openAICompatible";
 import { filterRelationsForFriends, normalizeFriendRelations } from "@/lib/ai/friendRelations";
+import { runOrchestratedConversation } from "@/lib/ai/friendOrchestrator";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 type ChatRequest = {
   message?: unknown;
@@ -27,7 +28,6 @@ type ChatRequest = {
   userState?: unknown;
   interactionType?: unknown;
   relations?: unknown;
-  // 用户前端传入的 API 配置
   apiKey?: unknown;
   baseUrl?: unknown;
   model?: unknown;
@@ -51,21 +51,11 @@ export async function POST(request: Request) {
   const groupStyle = typeof body.groupStyle === "string" ? body.groupStyle.slice(0, 80) : "温柔治愈 + 热闹整活";
   const userState = typeof body.userState === "string" ? body.userState.slice(0, 160) : "";
 
-  const baseReplyPlan =
-    interactionType === "ambient"
-      ? { min: 1, max: 3, label: "群友基于上一条群友消息自然续聊，轻量接话后就停" }
-      : estimateReplyPlan(message, mode);
   const replyPlan =
     friends.length === 1
-      ? {
-          ...baseReplyPlan,
-          min: Math.min(baseReplyPlan.min, 1),
-          max: Math.min(baseReplyPlan.max, 3),
-          label: `私聊场景，${baseReplyPlan.label}`
-        }
-      : baseReplyPlan;
+      ? { min: 1, max: 3, label: "私聊场景" }
+      : estimateReplyPlan(message, mode);
 
-  // 用户前端传入的 API 配置
   const userConfig = {
     apiKey: typeof body.apiKey === "string" ? body.apiKey.trim() : undefined,
     baseUrl: typeof body.baseUrl === "string" ? body.baseUrl.trim() : undefined,
@@ -73,9 +63,11 @@ export async function POST(request: Request) {
     providerName: typeof body.providerName === "string" ? body.providerName.trim() : undefined
   };
 
-  // 既没有服务器 key 也没有用户 key → mock
   const hasServerKey = Boolean(process.env.AI_FRIENDS_API_KEY || process.env.DEEPSEEK_API_KEY);
   const hasUserKey = Boolean(userConfig.apiKey);
+  const effectiveConfig = hasUserKey ? userConfig : undefined;
+
+  // 没有 API Key → mock
   if (!hasServerKey && !hasUserKey) {
     return NextResponse.json({
       provider: "未配置 API",
@@ -86,42 +78,59 @@ export async function POST(request: Request) {
     });
   }
 
+  // ═══ 编排模式：多朋友群聊 ═══
+  if (friends.length >= 2) {
+    try {
+      const response = await runOrchestratedConversation({
+        message,
+        history,
+        friends,
+        mode,
+        groupStyle,
+        userState,
+        userConfig: effectiveConfig,
+        interactionType
+      });
+
+      const hasMessages = response.messages.length > 0;
+
+      return NextResponse.json({
+        provider: effectiveConfig?.providerName || "DeepSeek",
+        model: effectiveConfig?.model || "deepseek-v4-flash",
+        usingMock: false,
+        orchestrated: true,
+        ...response,
+        summary: response.summary || {
+          mainPoints: [],
+          disagreement: "暂无",
+          safestAdvice: hasMessages ? "请继续。" : "请稍后再试。",
+          nextAction: "等待用户回复。",
+          missingInfo: "N/A"
+        }
+      });
+    } catch {
+      // 编排失败 → 回退到原来的单次调用
+    }
+  }
+
+  // ═══ 回退：私聊或原单次调用 ═══
   const modelResult = await callFriendModelJson({
     messages: [
       {
         role: "system",
-        content: buildFriendGroupPrompt({
-          friends,
-          groupStyle,
-          mode,
-          userState,
-          replyPlan,
-          memoryContext,
-          relations
-        })
+        content: buildFriendGroupPrompt({ friends, groupStyle, mode, userState, replyPlan, memoryContext, relations })
       },
       {
         role: "user",
-        content: buildUserPrompt({
-          message,
-          history,
-          memoryContext,
-          friends,
-          mode,
-          interactionType
-        })
+        content: buildUserPrompt({ message, history, memoryContext, friends, mode, interactionType })
       }
     ],
-    userConfig: hasUserKey ? userConfig : undefined
+    userConfig: effectiveConfig
   });
 
   if (!modelResult.ok) {
     return NextResponse.json(
-      {
-        error: modelResult.error,
-        provider: modelResult.provider,
-        model: modelResult.model
-      },
+      { error: modelResult.error, provider: modelResult.provider, model: modelResult.model },
       { status: modelResult.status ?? 502 }
     );
   }
@@ -134,7 +143,7 @@ export async function POST(request: Request) {
       provider: modelResult.provider,
       model: modelResult.model,
       usingMock: true,
-      warning: "模型刚才说话格式乱了一下，已切到本地兜底回复。",
+      warning: "模型说话格式乱了，已切到兜底回复。",
       ...mockFriendGroupResponse(message, mode, friends, replyPlan)
     });
   }
