@@ -407,7 +407,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
         {/* ═══ 消息区 ═══ */}
         <section
           ref={scrollRef}
-          className={`${wallpaper} soft-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 py-4`}
+          className={`${wallpaper} soft-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3.5 py-4 relative`}
           onScroll={() => {
             const el = scrollRef.current;
             if (!el) return;

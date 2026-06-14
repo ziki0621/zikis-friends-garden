@@ -1,10 +1,13 @@
 const KEY = "ziki-wallpaper-v1";
 
 export const wallpapers = [
-  { id: "garden", label: "庄园花园", emoji: "🌸" },
-  { id: "linen", label: "亚麻纹理", emoji: "🧶" },
-  { id: "stars", label: "星点夜幕", emoji: "✨" },
-  { id: "plain", label: "素净暖色", emoji: "🍂" }
+  { id: "garden", label: "庄园花园", emoji: "🌸", animated: false },
+  { id: "linen", label: "亚麻纹理", emoji: "🧶", animated: false },
+  { id: "stars", label: "星点夜幕", emoji: "✨", animated: false },
+  { id: "plain", label: "素净暖色", emoji: "🍂", animated: false },
+  { id: "sakura", label: "飘落花瓣", emoji: "💮", animated: true },
+  { id: "aurora", label: "柔光浮动", emoji: "🌅", animated: true },
+  { id: "cosmos", label: "星辰流转", emoji: "🌌", animated: true }
 ] as const;
 
 export type WallpaperId = (typeof wallpapers)[number]["id"];
@@ -25,6 +28,7 @@ export function setWallpaper(id: WallpaperId) {
 
 export function getWallpaperClass(): string {
   const id = getWallpaper();
-  if (id === "garden") return "chat-wallpaper";
-  return `chat-wallpaper-${id}`;
+  const wp = wallpapers.find((w) => w.id === id);
+  if (!wp || wp.id === "garden") return "chat-wallpaper";
+  return `chat-wallpaper-${wp.id}`;
 }

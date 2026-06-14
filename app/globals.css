@@ -192,6 +192,106 @@ a {
 }
 
 /* ═══════════════════════════════════════════
+   聊天壁纸 · 动效背景
+   ═══════════════════════════════════════════ */
+
+/* 花瓣飘落 */
+.chat-wallpaper-sakura {
+  background-color: #f8f1e8;
+  background-image:
+    radial-gradient(ellipse 50% 20% at 50% 2%, rgba(245,225,210,0.7), transparent);
+  background-size: 100% 100%;
+  position: relative;
+  overflow: hidden;
+}
+.chat-wallpaper-sakura::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 12% -5%, rgba(245,180,170,0.5) 0, transparent 8%),
+    radial-gradient(circle at 35% -3%, rgba(250,200,180,0.4) 0, transparent 5%),
+    radial-gradient(circle at 58% -6%, rgba(245,185,175,0.45) 0, transparent 7%),
+    radial-gradient(circle at 75% -2%, rgba(248,195,185,0.38) 0, transparent 6%),
+    radial-gradient(circle at 90% -4%, rgba(245,180,170,0.42) 0, transparent 7%);
+  animation: sakura-fall 8s linear infinite;
+}
+@keyframes sakura-fall {
+  0% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { background-position: 8% 110%, 3% 115%, -5% 112%, 7% 108%, -3% 114%; opacity: 0; }
+}
+
+/* 浮动光点 */
+.chat-wallpaper-aurora {
+  background-color: #f4efe6;
+  background-image:
+    radial-gradient(ellipse 60% 30% at 30% 15%, rgba(184,150,62,0.06), transparent),
+    radial-gradient(ellipse 50% 30% at 70% 80%, rgba(125,155,118,0.04), transparent);
+  background-size: 100% 100%;
+}
+.chat-wallpaper-aurora::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(212,184,96,0.15) 0, transparent 12px),
+    radial-gradient(circle at 60% 50%, rgba(184,150,62,0.1) 0, transparent 10px),
+    radial-gradient(circle at 85% 25%, rgba(212,184,96,0.12) 0, transparent 14px),
+    radial-gradient(circle at 40% 70%, rgba(184,150,62,0.08) 0, transparent 8px),
+    radial-gradient(circle at 10% 65%, rgba(212,184,96,0.1) 0, transparent 11px);
+  background-size: 140% 140%;
+  animation: aurora-drift 12s ease-in-out infinite;
+}
+@keyframes aurora-drift {
+  0%, 100% { background-position: 0% 0%; opacity: 0.5; }
+  25% { background-position: 3% 2%; opacity: 0.8; }
+  50% { background-position: 0% 4%; opacity: 0.6; }
+  75% { background-position: -3% 2%; opacity: 0.9; }
+}
+
+/* 星点旋转 */
+.chat-wallpaper-cosmos {
+  background-color: #f5f0e5;
+  background-image:
+    radial-gradient(ellipse 50% 20% at 50% 3%, rgba(248,240,225,0.8), transparent);
+  background-size: 100% 100%;
+}
+.chat-wallpaper-cosmos::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(140,120,90,0.08) 0, transparent 2.5px),
+    radial-gradient(circle at 30% 25%, rgba(140,120,90,0.06) 0, transparent 1.5px),
+    radial-gradient(circle at 45% 12%, rgba(140,120,90,0.09) 0, transparent 2px),
+    radial-gradient(circle at 60% 22%, rgba(140,120,90,0.05) 0, transparent 3px),
+    radial-gradient(circle at 78% 16%, rgba(140,120,90,0.07) 0, transparent 1.8px),
+    radial-gradient(circle at 8% 45%, rgba(140,120,90,0.06) 0, transparent 2px),
+    radial-gradient(circle at 22% 38%, rgba(140,120,90,0.08) 0, transparent 2.5px),
+    radial-gradient(circle at 48% 42%, rgba(140,120,90,0.05) 0, transparent 1.5px),
+    radial-gradient(circle at 68% 36%, rgba(140,120,90,0.07) 0, transparent 2px),
+    radial-gradient(circle at 82% 44%, rgba(140,120,90,0.06) 0, transparent 2.5px),
+    radial-gradient(circle at 18% 68%, rgba(140,120,90,0.07) 0, transparent 2px),
+    radial-gradient(circle at 42% 72%, rgba(140,120,90,0.05) 0, transparent 1.5px),
+    radial-gradient(circle at 65% 64%, rgba(140,120,90,0.08) 0, transparent 2px),
+    radial-gradient(circle at 88% 68%, rgba(140,120,90,0.06) 0, transparent 2.5px);
+  background-size: 200% 200%;
+  animation: cosmos-spin 20s linear infinite;
+}
+@keyframes cosmos-spin {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 5% 5%; }
+}
+
+/* ═══════════════════════════════════════════
    组件 · 卡片
    ═══════════════════════════════════════════ */
 
