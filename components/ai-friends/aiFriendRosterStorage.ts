@@ -78,7 +78,25 @@ export function readCustomAIFriends() {
   }
 }
 
-function writeCustomAIFriends(friends: AIFriend[]) {
+export function updateStoredAIFriend(friendId: string, updates: Partial<AIFriend>) {
+  const friends = readVisibleAIFriends();
+  const next = friends.map((f) => (f.id === friendId ? { ...f, ...updates } : f));
+  // Write back to the right store (custom or hidden)
+  const custom = readCustomAIFriends();
+  if (custom.some((f) => f.id === friendId)) {
+    writeCustomAIFriends(next.filter((f) => custom.some((c) => c.id === f.id)));
+  }
+  // Also update group-level friend settings
+  const groupSettings = readFriendSettings();
+  for (const [gid, gfs] of Object.entries(groupSettings)) {
+    if (gfs.some((f) => f.id === friendId)) {
+      groupSettings[gid] = gfs.map((f) => (f.id === friendId ? { ...f, ...updates } : f));
+    }
+  }
+  writeFriendSettings(groupSettings);
+}
+
+export function writeCustomAIFriends(friends: AIFriend[]) {
   if (typeof window === "undefined") {
     return;
   }

@@ -183,7 +183,7 @@ export default function PeoplePage() {
                 <Link
                   key={f.id}
                   className="flex flex-col items-center gap-1.5 min-w-[64px]"
-                  href={`/ai-friends/dm/${f.id}`}
+                  href={`/ai-friends/friend/${f.id}`}
                 >
                   <AvatarCircle
                     avatar={f.avatar}
