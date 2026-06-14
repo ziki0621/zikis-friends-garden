@@ -24,6 +24,7 @@ import { getPinnedChats, pinChat, unpinChat } from "@/components/ai-friends/pinS
 import { getLastActivity } from "@/components/ai-friends/activityStorage";
 import { clearUnread, getUnread, seedInitialUnreads } from "@/components/ai-friends/unreadStorage";
 import { ApiKeyModal } from "@/components/ai-friends/ApiKeyModal";
+import { hasUserApiConfig, getUserApiConfig } from "@/components/ai-friends/apiKeyStorage";
 
 /* ═══ 统一的对话项类型 ═══ */
 type ConversationItem = {
@@ -203,9 +204,17 @@ export function AIFriendsInbox() {
         {/* ═══ 头部 ═══ */}
         <header className="sticky top-0 z-10 bg-cream-warm/95 backdrop-blur-2xl px-5 pb-3 pt-5">
           <div className="flex items-center justify-between">
-            <h1 className="text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-deep">
-              消息
-            </h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-deep">
+                消息
+              </h1>
+              {hasUserApiConfig() && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-sage-50 px-2 py-0.5 text-[10px] font-medium text-sage-600 ring-1 ring-sage-200/50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sage-400" />
+                  {getUserApiConfig()?.providerName || "API"}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1">
               <button
                 className="grid h-8 w-8 place-items-center rounded-full text-ink-muted transition hover:bg-manor-100 hover:text-ink-soft"
@@ -322,7 +331,7 @@ export function AIFriendsInbox() {
 
           {filtered.length === 0 && (
             <div className="flex min-h-32 flex-col items-center justify-center gap-1 px-6 py-10 text-center">
-              <p className="text-sm text-ink-muted">{conversations.length === 0 ? "还没有对话，新建一个群聊或朋友。" : "没有找到相关对话"}</p>
+              <p className="text-sm text-ink-muted">{conversations.length === 0 ? "还没有对话，去「人物」页创建你的第一个 AI 朋友和群聊吧。" : "没有找到相关对话"}</p>
             </div>
           )}
 

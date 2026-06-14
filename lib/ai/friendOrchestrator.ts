@@ -42,6 +42,11 @@ type SpeakResult = {
 export async function runOrchestratedConversation(input: OrchestrateInput): Promise<FriendGroupResponse> {
   const { message, history, friends, mode, groupStyle, userState, userConfig, interactionType } = input;
 
+  // 单人或空群 → 回退到简单模式
+  if (friends.length <= 1) {
+    return fallbackSingleReply(input);
+  }
+
   // ═══ Phase 1: 导演选角 ═══
   const orchestrate = await callOrchestrator({ message, history, friends, mode, groupStyle, userState, userConfig, interactionType });
 

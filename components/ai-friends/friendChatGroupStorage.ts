@@ -35,7 +35,11 @@ export function createStoredFriendChatGroup(name: string) {
   const now = new Date();
   const id = `custom-${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   const rosterFriends = readVisibleAIFriends();
-  const friends = (rosterFriends.length > 0 ? rosterFriends : defaultFriends).slice(0, 3).map((friend) => ({ ...friend }));
+  // 如果没有可见朋友，自动创建一个占位朋友
+  const actualFriends = rosterFriends.length > 0
+    ? rosterFriends
+    : [createMinimalFriend(cleanName + "的好友")];
+  const friends = actualFriends.slice(0, 3).map((friend) => ({ ...friend }));
   const group: FriendChatGroup = {
     id,
     name: cleanName,
@@ -211,6 +215,35 @@ function sanitizeGroupFriends(value: unknown): AIFriend[] {
     .slice(0, 6);
 
   return friends.length >= 2 ? friends : defaultFriends.slice(0, 3);
+}
+
+const autoFriendColors = ["#F97373", "#F59E0B", "#2F80ED", "#10B981", "#8B5CF6", "#0891B2", "#DB2777"];
+
+function createMinimalFriend(name: string): AIFriend {
+  const id = `auto-friend-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  const base = defaultFriends[0];
+  const friend: AIFriend = {
+    ...base,
+    id,
+    name: name.slice(0, 18),
+    title: "自动创建的 AI 朋友",
+    relationship: "刚加入的 AI 朋友。",
+    personality: "友好、自然、有边界感。",
+    style: "口语短句，不装熟。",
+    job: "自然接话，不让群聊冷场。",
+    careFocus: "用户当下想聊什么。",
+    quirks: "会问具体的小问题",
+    boundaries: "不抢话，不制造依赖。",
+    color: autoFriendColors[Math.floor(Math.random() * autoFriendColors.length)],
+    emoji: "🤖"
+  };
+  // 写入 custom friends
+  const existing = (() => {
+    try { return JSON.parse(window.localStorage.getItem("ziki-ai-custom-friends-v1") || "[]"); }
+    catch { return []; }
+  })();
+  window.localStorage.setItem("ziki-ai-custom-friends-v1", JSON.stringify([friend, ...existing]));
+  return friend;
 }
 
 function cleanText(value: unknown, fallback: string, maxLength: number) {

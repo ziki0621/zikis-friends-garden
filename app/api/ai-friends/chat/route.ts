@@ -16,7 +16,7 @@ import { callFriendModelJson } from "@/lib/ai/openAICompatible";
 import { filterRelationsForFriends, normalizeFriendRelations } from "@/lib/ai/friendRelations";
 import { runOrchestratedConversation } from "@/lib/ai/friendOrchestrator";
 
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 type ChatRequest = {
   message?: unknown;

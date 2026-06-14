@@ -64,6 +64,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
   const [contextMenu, setContextMenu] = useState<MessageContextMenu | null>(null);
   const [scrolledUp, setScrolledUp] = useState(false);
   const [headerMenu, setHeaderMenu] = useState(false);
+  const [apiStatus, setApiStatus] = useState<"idle" | "connected" | "mock">("idle");
   const router = useRouter();
   const isDM = group.id.startsWith("dm-");
 
@@ -203,6 +204,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
       setLoading(false);
       updateFriendMemoryFromResponse(group.id, friends, data);
       touchChat(group.id);
+      setApiStatus(data.usingMock ? "mock" : "connected");
 
       // ★ 立即写入 pending batch：即使切出也能在回来时回放
       const pendingMessages = data.messages.map((m) => {
@@ -293,6 +295,8 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
   }
 
   async function ambient({ runId, userMsg, baseHistory, delivered }: { runId: number; userMsg: string; baseHistory: ChatHistoryMessage[]; delivered: Extract<TimelineItem, { type: "friend" }>[] }) {
+    // 只有 1 个或更少朋友时不续聊
+    if (friends.length <= 1 || delivered.length === 0) return;
     if (!shouldAmbient(group, userMsg, delivered)) return;
     await sleep(ambientSilence(group.id, delivered.length));
     if (runRef.current !== runId) return;
@@ -345,7 +349,21 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
             )}
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">{group.name}</h1>
-              <p className="truncate text-[11px] leading-4 text-ink-muted">{friends.length} 位朋友</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-[11px] leading-4 text-ink-muted">{friends.length} 位朋友</p>
+                {apiStatus !== "idle" && (
+                  <span className={`inline-flex items-center gap-1 shrink-0 rounded-full px-1.5 py-px text-[9px] font-medium ${
+                    apiStatus === "connected"
+                      ? "bg-sage-50 text-sage-600"
+                      : "bg-honey-50 text-honey-600"
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      apiStatus === "connected" ? "bg-sage-400" : "bg-honey-400"
+                    }`} />
+                    {apiStatus === "connected" ? "DeepSeek" : "Mock"}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="relative">
               <button
