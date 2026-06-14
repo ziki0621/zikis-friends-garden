@@ -11,7 +11,7 @@ import { readVisibleAIFriends, createStoredAIFriend } from "@/components/ai-frie
 import { createStoredFriendChatGroup } from "@/components/ai-friends/friendChatGroupStorage";
 import { readVisibleFriendChatGroups } from "@/components/ai-friends/friendChatGroupStorage";
 import { type AIFriend } from "@/lib/ai/friendGroup";
-import { resetAllData } from "@/components/ai-friends/resetStorage";
+import { resetAllData, backupAllData, hasBackup, restoreFromBackup, discardBackup } from "@/components/ai-friends/resetStorage";
 
 export default function PeoplePage() {
   const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
@@ -20,9 +20,11 @@ export default function PeoplePage() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [creating, setCreating] = useState<"group" | "friend" | null>(null);
   const [newName, setNewName] = useState("");
+  const [backupExists, setBackupExists] = useState(false);
 
   useEffect(() => {
     refreshData();
+    setBackupExists(hasBackup());
     window.addEventListener("storage", refreshData);
     return () => window.removeEventListener("storage", refreshData);
   }, []);
@@ -249,8 +251,15 @@ export default function PeoplePage() {
             <button
               className="flex w-full items-center gap-4 rounded-[18px] bg-rose-50/60 px-4 py-4 shadow-sm ring-1 ring-rose-200/30 transition hover:bg-rose-100/70 hover:-translate-y-0.5 active:translate-y-0"
               onClick={() => {
-                if (!window.confirm("确定要清除所有数据并重启吗？\n\n所有群聊、AI 朋友、聊天记录和设定都会被删除。\n你的 API Key 不会受影响。")) return;
+                if (!window.confirm(
+                  "确定要清除所有数据并重启吗？\n\n" +
+                  "所有群聊、AI 朋友、聊天记录和设定都会被删除。\n" +
+                  "你的 API Key 不会受影响。\n\n" +
+                  "重置后可以在这里「撤销还原」，恢复重置前的状态。"
+                )) return;
+                backupAllData();
                 resetAllData();
+                setBackupExists(true);
                 window.location.href = "/ai-friends";
               }}
             >
@@ -263,6 +272,27 @@ export default function PeoplePage() {
               </div>
               <ArrowLeft size={15} className="rotate-180 text-rose-300" />
             </button>
+
+            {/* 撤销还原 */}
+            {backupExists && (
+              <button
+                className="mt-2.5 flex w-full items-center gap-4 rounded-[18px] bg-sage-50/60 px-4 py-4 shadow-sm ring-1 ring-sage-200/30 transition hover:bg-sage-100/70 hover:-translate-y-0.5 active:translate-y-0"
+                onClick={() => {
+                  if (!window.confirm("确定恢复到重置前的状态吗？\n\n所有聊天记录、朋友设定和群聊都会还原。")) return;
+                  restoreFromBackup();
+                  window.location.href = "/ai-friends";
+                }}
+              >
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-sage-100 text-sage-600">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-undo-2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-[15px] font-semibold text-sage-700">撤销还原</p>
+                  <p className="mt-0.5 text-[12px] text-sage-500/80">恢复到重置前的所有数据</p>
+                </div>
+                <ArrowLeft size={15} className="rotate-180 text-sage-300" />
+              </button>
+            )}
           </div>
         </section>
       </div>
