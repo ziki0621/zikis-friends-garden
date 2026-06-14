@@ -198,7 +198,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
     try {
       const mem = readFriendMemory(group.id);
       const rels = readFriendRelationsForFriends(friends);
-      const hist = [...chatHistory, { role: "user" as const, content: fmtHistory(msg, qt) }].slice(-12);
+      const hist = [...chatHistory, { role: "user" as const, content: fmtHistory(msg, qt) }].slice(-40);
       const res = await fetch("/api/ai-friends/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

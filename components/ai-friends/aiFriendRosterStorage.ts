@@ -81,11 +81,22 @@ export function readCustomAIFriends() {
 export function updateStoredAIFriend(friendId: string, updates: Partial<AIFriend>) {
   const friends = readVisibleAIFriends();
   const next = friends.map((f) => (f.id === friendId ? { ...f, ...updates } : f));
-  // Write back to the right store (custom or hidden)
+
+  // 更新 custom friends 表中的记录
   const custom = readCustomAIFriends();
-  if (custom.some((f) => f.id === friendId)) {
+  const friendInCustom = custom.some((f) => f.id === friendId);
+
+  if (friendInCustom) {
+    // 已经在 custom 表里 → 直接覆盖
     writeCustomAIFriends(next.filter((f) => custom.some((c) => c.id === f.id)));
+  } else {
+    // 预设朋友 → 写入 custom 表让它变成已编辑状态
+    const updatedFriend = next.find((f) => f.id === friendId);
+    if (updatedFriend) {
+      writeCustomAIFriends([updatedFriend, ...custom]);
+    }
   }
+
   // Also update group-level friend settings
   const groupSettings = readFriendSettings();
   for (const [gid, gfs] of Object.entries(groupSettings)) {

@@ -51,15 +51,28 @@ export async function runOrchestratedConversation(input: OrchestrateInput): Prom
   const orchestrate = await callOrchestrator({ message, history, friends, mode, groupStyle, userState, userConfig, interactionType });
 
   if (!orchestrate.ok) {
-    // 兜底：让第一个人用默认方式说话
     return fallbackSingleReply(input);
   }
 
   const { batches } = orchestrate;
 
+  // ═══ 上下文：压缩旧对话为 500 字摘要 + 保留最近 8 条 ═══
+  const rawHistory = history.map((h) => formatHistoryLine(h));
+  const FULL_CONTEXT_LIMIT = 12;
+  const KEEP_RAW = 8;
+  let compressedContextLines: string[];
+  if (rawHistory.length > FULL_CONTEXT_LIMIT) {
+    const older = rawHistory.slice(0, -KEEP_RAW);
+    const recent = rawHistory.slice(-KEEP_RAW);
+    const summary = await compressOlderMessages(older, userConfig);
+    compressedContextLines = summary ? [`【对话摘要】${summary}`, "", "--- 最近对话 ---", ...recent] : recent;
+  } else {
+    compressedContextLines = rawHistory;
+  }
+
   // ═══ Phase 2: 按批次并行发言 ═══
   const allSpoken: SpeakResult[] = [];
-  const contextLines: string[] = [...history.map((h) => formatHistoryLine(h))];
+  const contextLines: string[] = [...compressedContextLines];
 
   for (const batch of batches) {
     // 同批次并行
@@ -484,6 +497,32 @@ ${conversation}`
 
 function formatHistoryLine(h: ChatHistoryMessage): string {
   return `${h.role === "user" ? "用户" : h.speaker || "AI"}: ${h.content}`;
+}
+
+/** 压缩旧的对话历史到 500 字摘要 */
+async function compressOlderMessages(
+  olderLines: string[],
+  userConfig?: { apiKey?: string; baseUrl?: string; model?: string; providerName?: string } | null
+): Promise<string | null> {
+  if (olderLines.length === 0) return null;
+  const raw = olderLines.join("\n").slice(0, 4000);
+  try {
+    const result = await callFriendModelJson({
+      messages: [
+        { role: "system", content: "你是对话摘要器。把下面这段群聊历史压缩成一段连贯的摘要（≤500 中文字符）。保留关键事件、情绪变化、重要决定和未解决的问题。用自然的中文叙述。不要遗漏任何一方的关键观点。" },
+        { role: "user", content: raw }
+      ],
+      temperature: 0.3,
+      maxTokens: 400,
+      userConfig: userConfig?.apiKey ? userConfig : undefined,
+      jsonMode: false
+    });
+    if (result.ok && result.content.trim()) {
+      return result.content.trim().slice(0, 500);
+    }
+  } catch {}
+  // 兜底：硬截断前几条
+  return olderLines.slice(0, 8).map((l) => l.slice(0, 60)).join("；").slice(0, 500) || null;
 }
 
 function getFriendTemperature(friendId: string, mode: string): number {
