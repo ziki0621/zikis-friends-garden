@@ -34,6 +34,7 @@ import {
   writePendingBatch, readPendingBatch, clearPendingBatch
 } from "@/components/ai-friends/pendingStorage";
 import { getUserApiConfig } from "@/components/ai-friends/apiKeyStorage";
+import { getWallpaperClass } from "@/components/ai-friends/wallpaperStorage";
 import { useRouter } from "next/navigation";
 
 /* ── types ── */
@@ -65,6 +66,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
   const [scrolledUp, setScrolledUp] = useState(false);
   const [headerMenu, setHeaderMenu] = useState(false);
   const [apiStatus, setApiStatus] = useState<"idle" | "connected" | "mock">("idle");
+  const [wallpaper, setWallpaper] = useState("chat-wallpaper");
   const router = useRouter();
   const isDM = group.id.startsWith("dm-");
 
@@ -141,6 +143,10 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
     touchChat(group.id);
     clearUnread(group.id);
     seedInitialUnreads();
+    setWallpaper(getWallpaperClass());
+    const onWallpaper = () => setWallpaper(getWallpaperClass());
+    window.addEventListener("wallpaper-changed", onWallpaper);
+    return () => window.removeEventListener("wallpaper-changed", onWallpaper);
   }, [group.id]);
 
   useEffect(() => {
@@ -401,7 +407,7 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
         {/* ═══ 消息区 ═══ */}
         <section
           ref={scrollRef}
-          className="chat-wallpaper soft-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 py-4"
+          className={`${wallpaper} soft-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3.5 py-4`}
           onScroll={() => {
             const el = scrollRef.current;
             if (!el) return;

@@ -16,6 +16,7 @@ import {
 import {
   getGroupAvatar, setGroupAvatar, removeGroupAvatar
 } from "@/components/ai-friends/groupAvatarStorage";
+import { wallpapers, getWallpaper, setWallpaper, type WallpaperId } from "@/components/ai-friends/wallpaperStorage";
 
 type EditField = keyof Pick<AIFriend, "name" | "title" | "relationship" | "personality" | "style" | "job" | "careFocus" | "quirks" | "boundaries" | "color" | "avatar" | "emoji">;
 
@@ -26,6 +27,7 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
   const [userProfile, setUserProfile] = useState<UserProfile>(defaultUserProfile);
   const [saved, setSaved] = useState(false);
   const [groupAvatarUrl, setGroupAvatarUrl] = useState<string | undefined>();
+  const [activeWallpaper, setActiveWallpaper] = useState<WallpaperId>("garden");
 
   useEffect(() => {
     const stored = readFriendSettings();
@@ -35,6 +37,7 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
     setAvailableFriends(roster.length > 0 ? roster : group.friends);
     setUserProfile(readUserProfile());
     setGroupAvatarUrl(getGroupAvatar(group.id));
+    setActiveWallpaper(getWallpaper());
   }, [group]);
 
   const previewLine = useMemo(() => draftFriends.map((f) => f.name).join("、"), [draftFriends]);
@@ -141,6 +144,55 @@ export function AIFriendSettingsPage({ group }: { group: FriendChatGroup }) {
                   <button className="mt-1 text-[11px] text-rose-500 hover:text-rose-600" onClick={handleRemoveGroupAvatar}>移除头像</button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* 聊天背景 */}
+          <div className="border-b border-gold-200/20 px-4 py-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[14px] font-semibold text-ink-deep">聊天背景</h2>
+              <span className="rounded-full bg-manor-100 px-2 py-0.5 text-[10px] font-semibold text-ink-muted">4 种</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {wallpapers.map((wp) => {
+                const active = activeWallpaper === wp.id;
+                return (
+                  <button
+                    key={wp.id}
+                    className={`rounded-[14px] border p-3 text-left transition-all ${
+                      active
+                        ? "border-sage-400 bg-sage-50 shadow-[inset_0_0_0_1px_rgba(125,155,118,0.2)]"
+                        : "border-manor-200 bg-white hover:border-gold-300"
+                    }`}
+                    onClick={() => {
+                      setWallpaper(wp.id);
+                      setActiveWallpaper(wp.id);
+                      window.dispatchEvent(new Event("wallpaper-changed"));
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl">{wp.emoji}</span>
+                      <span className="text-[13px] font-semibold text-ink-deep">{wp.label}</span>
+                      {active && <span className="ml-auto text-[10px] text-sage-500 font-semibold">使用中</span>}
+                    </div>
+                    {/* 微缩预览 */}
+                    <div
+                      className={`mt-2 h-10 rounded-[8px] border border-black/[0.03] ${
+                        wp.id === "garden" ? "bg-[#f8f4ec]" :
+                        wp.id === "linen" ? "bg-[#f6f2e9]" :
+                        wp.id === "stars" ? "bg-[#efe8d8]" :
+                        "bg-[#f7f3ec]"
+                      }`}
+                      style={
+                        wp.id === "garden" ? { backgroundImage: "radial-gradient(circle at 20% 40%, rgba(184,150,62,0.05) 0, transparent 8px), radial-gradient(circle at 70% 30%, rgba(184,150,62,0.04) 0, transparent 6px)" } :
+                        wp.id === "linen" ? { backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180,160,130,0.03) 2px, rgba(180,160,130,0.03) 3px)" } :
+                        wp.id === "stars" ? { backgroundImage: "radial-gradient(circle at 30% 30%, rgba(140,130,110,0.06) 0, transparent 2px), radial-gradient(circle at 60% 40%, rgba(140,130,110,0.04) 0, transparent 1.5px)" } :
+                        {}
+                      }
+                    />
+                  </button>
+                );
+              })}
             </div>
           </div>
 

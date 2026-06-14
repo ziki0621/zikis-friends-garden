@@ -132,63 +132,63 @@ a {
 }
 
 /* ═══════════════════════════════════════════
-   聊天壁纸 · 庄园花园花纹
+   聊天壁纸 · 四种可选花纹
    ═══════════════════════════════════════════ */
 
+/* 默认：庄园花园 */
 .chat-wallpaper {
-  --petal-color: rgba(184, 150, 62, 0.04);
-  --leaf-color: rgba(125, 155, 118, 0.035);
-  --dot-color: rgba(184, 150, 62, 0.05);
-
   background-color: #f8f4ec;
   background-image:
-    /* 顶部柔光 */
     radial-gradient(ellipse 60% 30% at 50% 5%, rgba(245, 235, 212, 0.6), transparent),
-    /* 大花图案 */
-    radial-gradient(circle at 14% 22%, var(--petal-color) 0, var(--petal-color) 18px, transparent 18px),
-    radial-gradient(circle at 82% 18%, var(--petal-color) 0, var(--petal-color) 14px, transparent 14px),
-    radial-gradient(circle at 38% 62%, var(--petal-color) 0, var(--petal-color) 20px, transparent 20px),
-    radial-gradient(circle at 66% 48%, var(--petal-color) 0, var(--petal-color) 16px, transparent 16px),
-    radial-gradient(circle at 22% 78%, var(--petal-color) 0, var(--petal-color) 12px, transparent 12px),
-    radial-gradient(circle at 90% 68%, var(--petal-color) 0, var(--petal-color) 15px, transparent 15px),
-    /* 叶片点缀 */
-    radial-gradient(ellipse 28px 16px at 30% 34%, var(--leaf-color) 0, transparent 100%),
-    radial-gradient(ellipse 22px 14px at 72% 56%, var(--leaf-color) 0, transparent 100%),
-    radial-gradient(ellipse 24px 12px at 54% 82%, var(--leaf-color) 0, transparent 100%),
-    radial-gradient(ellipse 20px 10px at 16% 64%, var(--leaf-color) 0, transparent 100%),
-    /* 微细散点 */
-    radial-gradient(circle at 48% 14%, var(--dot-color) 0, transparent 3px),
-    radial-gradient(circle at 76% 28%, var(--dot-color) 0, transparent 2px),
-    radial-gradient(circle at 18% 46%, var(--dot-color) 0, transparent 2.5px),
-    radial-gradient(circle at 58% 72%, var(--dot-color) 0, transparent 3px),
-    radial-gradient(circle at 84% 82%, var(--dot-color) 0, transparent 2px),
-    radial-gradient(circle at 34% 90%, var(--dot-color) 0, transparent 2.5px),
-    /* 细微纸纹横线 */
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 4px,
-      rgba(184, 150, 62, 0.01) 4px,
-      rgba(184, 150, 62, 0.01) 6px
-    );
-  background-size:
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%;
+    radial-gradient(circle at 14% 22%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 18px, transparent 18px),
+    radial-gradient(circle at 82% 18%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 14px, transparent 14px),
+    radial-gradient(circle at 38% 62%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 20px, transparent 20px),
+    radial-gradient(circle at 66% 48%, rgba(184,150,62,0.04) 0, rgba(184,150,62,0.04) 16px, transparent 16px),
+    radial-gradient(ellipse 28px 16px at 30% 34%, rgba(125,155,118,0.035) 0, transparent 100%),
+    radial-gradient(ellipse 22px 14px at 72% 56%, rgba(125,155,118,0.035) 0, transparent 100%),
+    radial-gradient(ellipse 24px 12px at 54% 82%, rgba(125,155,118,0.035) 0, transparent 100%),
+    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(184,150,62,0.01) 4px, rgba(184,150,62,0.01) 6px);
+  background-size: 100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%;
+}
+
+/* 亚麻纹理 */
+.chat-wallpaper-linen {
+  background-color: #f6f2e9;
+  background-image:
+    radial-gradient(ellipse 50% 25% at 50% 3%, rgba(255,251,240,0.7), transparent),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180,160,130,0.03) 2px, rgba(180,160,130,0.03) 3px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(180,160,130,0.025) 40px, rgba(180,160,130,0.025) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(180,160,130,0.012) 8px, rgba(180,160,130,0.012) 9px);
+  background-size: 100% 100%,100% 100%,100% 100%,100% 100%;
+}
+
+/* 星空夜幕 */
+.chat-wallpaper-stars {
+  background-color: #efe8d8;
+  background-image:
+    radial-gradient(ellipse 50% 20% at 50% 2%, rgba(255,248,230,0.8), transparent),
+    radial-gradient(circle at 12% 16%, rgba(140,130,110,0.06) 0, transparent 2px),
+    radial-gradient(circle at 28% 24%, rgba(140,130,110,0.05) 0, transparent 1.5px),
+    radial-gradient(circle at 45% 14%, rgba(140,130,110,0.07) 0, transparent 2.5px),
+    radial-gradient(circle at 63% 22%, rgba(140,130,110,0.04) 0, transparent 1.5px),
+    radial-gradient(circle at 78% 18%, rgba(140,130,110,0.06) 0, transparent 2px),
+    radial-gradient(circle at 8% 42%, rgba(140,130,110,0.05) 0, transparent 1.5px),
+    radial-gradient(circle at 34% 38%, rgba(140,130,110,0.04) 0, transparent 2px),
+    radial-gradient(circle at 56% 44%, rgba(140,130,110,0.06) 0, transparent 1.5px),
+    radial-gradient(circle at 70% 36%, rgba(140,130,110,0.04) 0, transparent 2.5px),
+    radial-gradient(circle at 88% 46%, rgba(140,130,110,0.05) 0, transparent 1.5px),
+    radial-gradient(circle at 22% 68%, rgba(140,130,110,0.06) 0, transparent 2px),
+    radial-gradient(circle at 50% 72%, rgba(140,130,110,0.04) 0, transparent 1.5px),
+    radial-gradient(circle at 76% 64%, rgba(140,130,110,0.05) 0, transparent 2px);
+  background-size: 100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 100%;
+}
+
+/* 素净纯色 */
+.chat-wallpaper-plain {
+  background-color: #f7f3ec;
+  background-image:
+    radial-gradient(ellipse 50% 20% at 50% 2%, rgba(255,251,240,0.5), transparent);
+  background-size: 100% 100%;
 }
 
 /* ═══════════════════════════════════════════
