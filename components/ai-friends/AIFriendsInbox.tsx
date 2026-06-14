@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { GitBranch, Pin, PinOff, Search, Settings, Trash2, UserRound, Users } from "lucide-react";
+import { GitBranch, Key, Pin, PinOff, Search, Settings, Trash2, UserRound, Users } from "lucide-react";
 import { type AIFriend } from "@/lib/ai/friendGroup";
 import { friendChatGroups, type FriendChatGroup } from "@/lib/ai/friendChatGroups";
 import { GroupAvatarStack } from "@/components/ai-friends/GroupAvatarStack";
@@ -205,6 +205,13 @@ export function AIFriendsInbox() {
               消息
             </h1>
             <div className="flex items-center gap-1">
+              <Link
+                className="grid h-8 w-8 place-items-center rounded-full text-ink-muted transition hover:bg-manor-100 hover:text-ink-soft"
+                href="/ai-friends/setting"
+                title="API 设置"
+              >
+                <Key size={15} />
+              </Link>
               <Link
                 className="grid h-8 w-8 place-items-center rounded-full text-ink-muted transition hover:bg-manor-100 hover:text-ink-soft"
                 href="/ai-friends/people"
