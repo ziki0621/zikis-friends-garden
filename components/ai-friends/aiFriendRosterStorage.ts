@@ -8,7 +8,19 @@ const friendColors = ["#F97373", "#F59E0B", "#2F80ED", "#10B981", "#8B5CF6", "#0
 
 export function readVisibleAIFriends() {
   const hiddenIds = new Set(readHiddenAIFriendIds());
-  return [...defaultFriends.filter((friend) => !hiddenIds.has(friend.id)), ...readCustomAIFriends()];
+  const custom = readCustomAIFriends();
+  const customById = new Map(custom.map((f) => [f.id, f]));
+
+  // 预设朋友：如果被编辑过就取 custom 版，否则取默认版
+  const defaultWithOverrides = defaultFriends
+    .filter((f) => !hiddenIds.has(f.id))
+    .map((f) => customById.get(f.id) || f);
+
+  // 自定义朋友（不含重复的预设 ID）
+  const defaultIds = new Set(defaultFriends.map((f) => f.id));
+  const newCustom = custom.filter((f) => !defaultIds.has(f.id));
+
+  return [...defaultWithOverrides, ...newCustom];
 }
 
 export function readStoredAIFriend(friendId: string) {
