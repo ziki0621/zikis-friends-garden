@@ -35,7 +35,8 @@ export default function AIFriendsPage() {
         const g = readStoredFriendChatGroup(active!.id) ?? friendChatGroups.find((x) => x.id === active!.id);
         setActiveGroup(g ?? null);
       } else {
-        const friend = readStoredAIFriend(active!.id);
+        const pureId = active!.id.replace(/^dm-/, "");
+        const friend = readStoredAIFriend(pureId);
         if (friend) {
           setActiveGroup({
             id: `dm-${friend.id}`,

@@ -8,11 +8,11 @@ import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { readStoredAIFriend, updateStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
 
 const METRICS = [
-  { key: "warmth", label: "温暖", hint: "越高越柔和贴心" },
-  { key: "sharpness", label: "锐度", hint: "越高越敢吐槽直说" },
-  { key: "analysis", label: "分析力", hint: "越高越喜欢拆解问题" },
-  { key: "action", label: "行动力", hint: "越高越催人做事" },
-  { key: "caution", label: "谨慎度", hint: "越高越会提醒风险" }
+  { key: "extraversion", label: "外向度", hint: "越高越主动开口、话多、爱热闹" },
+  { key: "empathy", label: "共情度", hint: "越高越能感受到情绪、喜欢先安慰" },
+  { key: "analysis", label: "分析度", hint: "越高越喜欢拆问题、讲逻辑、列结构" },
+  { key: "drive", label: "驱动力", hint: "越高越催人行动、给压力、推进展" },
+  { key: "playfulness", label: "玩心度", hint: "越高越爱开玩笑、调侃、接梗" }
 ] as const;
 
 export function FriendSettingsPage({ friendId }: { friendId: string }) {
@@ -269,17 +269,23 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
 function getFriendMetrics(f: AIFriend): Record<string, number> {
   const text = (f.name + f.title + f.personality + f.job + f.careFocus + f.quirks + f.id).toLowerCase();
 
-  let warmth = 50, sharpness = 50, analysis = 50, action = 50, caution = 50;
+  let extraversion = 50, empathy = 50, analysis = 50, drive = 50, playfulness = 50;
 
-  if (text.includes("nana") || text.includes("娜娜") || text.includes("温柔") || text.includes("接住")) warmth = 85;
-  if (text.includes("软") || text.includes("安慰")) warmth = Math.max(warmth, 75);
-  if (text.includes("kai") || text.includes("凯凯") || text.includes("嘴欠") || text.includes("吐槽")) sharpness = 85;
-  if (text.includes("lin") || text.includes("博士") || text.includes("分析") || text.includes("拆")) analysis = 85;
-  if (text.includes("结构") || text.includes("判断")) analysis = Math.max(analysis, 75);
-  if (text.includes("momo") || text.includes("末末") || text.includes("行动") || text.includes("做")) action = 85;
-  if (text.includes("催") || text.includes("进度") || text.includes("清单")) action = Math.max(action, 75);
-  if (text.includes("yan") || text.includes("阿言") || text.includes("风险") || text.includes("边界")) caution = 85;
-  if (text.includes("谨慎") || text.includes("冷却")) caution = Math.max(caution, 75);
+  if (text.includes("nana") || text.includes("娜娜")) { empathy = 80; extraversion = 55; playfulness = 45; }
+  if (text.includes("温柔") || text.includes("接住")) empathy = Math.max(empathy, 78);
+  if (text.includes("软") || text.includes("安慰")) empathy = Math.max(empathy, 75);
 
-  return { warmth, sharpness, analysis, action, caution };
+  if (text.includes("kai") || text.includes("凯凯")) { playfulness = 85; extraversion = 75; drive = 65; }
+  if (text.includes("嘴欠") || text.includes("吐槽")) playfulness = Math.max(playfulness, 80);
+
+  if (text.includes("lin") || text.includes("博士")) { analysis = 90; extraversion = 35; drive = 55; }
+  if (text.includes("分析") || text.includes("拆") || text.includes("结构")) analysis = Math.max(analysis, 80);
+
+  if (text.includes("momo") || text.includes("末末")) { drive = 88; extraversion = 60; }
+  if (text.includes("行动") || text.includes("做") || text.includes("催")) drive = Math.max(drive, 82);
+
+  if (text.includes("yan") || text.includes("阿言")) { analysis = 75; empathy = 30; extraversion = 30; }
+  if (text.includes("风险") || text.includes("谨慎")) analysis = Math.max(analysis, 70);
+
+  return { extraversion, empathy, analysis, drive, playfulness };
 }

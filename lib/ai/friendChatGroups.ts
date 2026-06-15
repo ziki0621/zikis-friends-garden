@@ -38,21 +38,7 @@ export const friendChatGroups: FriendChatGroup[] = [
     mode: "analysis",
     userState: "最近容易内耗，想要有人接住情绪，也想要具体判断。",
     friends: defaultFriends,
-    initialMessages: [
-      {
-        friendId: "nana",
-        content: "今天如果又开始自责，先停一下。你不是没用，你只是同时背了太多选项。"
-      },
-      {
-        friendId: "kai",
-        content: "对，脑子里开了二十个窗口还怪自己卡，多少有点离谱。",
-        replyTo: "娜娜"
-      },
-      {
-        friendId: "lin",
-        content: "等你来了，我们先分清：情绪、事实、下一步。不要把三件事搅在一起。"
-      }
-    ]
+    initialMessages: []
   },
   {
     id: "deadline-squad",
@@ -66,16 +52,7 @@ export const friendChatGroups: FriendChatGroup[] = [
     mode: "plan",
     userState: "最近有任务拖延，需要短步骤和监督。",
     friends: [momo, kai, lin],
-    initialMessages: [
-      {
-        friendId: "momo",
-        content: "今天不许用“等状态好一点”当免死金牌。先做 10 分钟。"
-      },
-      {
-        friendId: "kai",
-        content: "标题都没写就开始焦虑成片，挺有仪式感。开干。"
-      }
-    ]
+    initialMessages: []
   },
   {
     id: "late-night",
@@ -89,16 +66,7 @@ export const friendChatGroups: FriendChatGroup[] = [
     mode: "comfort",
     userState: "深夜容易情绪低落，需要低压力陪伴。",
     friends: [nana, yan, momo],
-    initialMessages: [
-      {
-        friendId: "nana",
-        content: "如果你今晚很累，我们可以只聊一点点。不用把所有事都解释清楚。"
-      },
-      {
-        friendId: "yan",
-        content: "先不要在半夜做重大决定。半夜的大脑很会夸大坏结果。"
-      }
-    ]
+    initialMessages: []
   },
   {
     id: "crossroads",
@@ -112,16 +80,7 @@ export const friendChatGroups: FriendChatGroup[] = [
     mode: "debate",
     userState: "正在面对重要选择，需要多视角辩论。",
     friends: [lin, yan, nana, kai],
-    initialMessages: [
-      {
-        friendId: "lin",
-        content: "重大选择不要只问“喜不喜欢”，还要问机会成本、可逆性和验证周期。"
-      },
-      {
-        friendId: "yan",
-        content: "我负责挑刺。能承受坏情况，才是真的想清楚。"
-      }
-    ]
+    initialMessages: []
   },
   {
     id: "daily-chaos",
@@ -135,16 +94,7 @@ export const friendChatGroups: FriendChatGroup[] = [
     mode: "normal",
     userState: "日常聊天，想轻松一点。",
     friends: [kai, nana, momo],
-    initialMessages: [
-      {
-        friendId: "kai",
-        content: "本群宗旨：允许崩溃三分钟，但不允许饿着肚子硬撑。"
-      },
-      {
-        friendId: "nana",
-        content: "凯凯翻译一下就是：先照顾身体，再处理世界。"
-      }
-    ]
+    initialMessages: []
   }
 ];
 
