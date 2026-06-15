@@ -52,7 +52,7 @@ type MessageContextMenu = { x: number; y: number; target: QuoteTarget; canMentio
 type SimulationPhase = "initial" | "ambient";
 type MessageTiming = { beforeTypingMs: number; typingMs: number; afterSendMs: number };
 
-export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
+export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup; fullWidth?: boolean }) {
   const [input, setInput] = useState("");
   const [friends, setFriends] = useState<AIFriend[]>(group.friends);
   const [userProfile, setUserProfile] = useState<UserProfile>(defaultUserProfile);
@@ -349,8 +349,8 @@ export function AIFriendsChatRoom({ group }: { group: FriendChatGroup }) {
   }
 
   return (
-    <main className="app-backdrop h-dvh overflow-hidden">
-      <div className="phone-shell mx-auto flex h-dvh min-h-0 max-w-[440px] flex-col bg-cream-warm">
+    <main className={`${fullWidth ? "flex flex-col h-dvh overflow-hidden" : "app-backdrop h-dvh overflow-hidden"}`}>
+      <div className={`${fullWidth ? "flex flex-col h-dvh overflow-hidden" : "phone-shell mx-auto flex h-dvh min-h-0 max-w-[440px] flex-col"} bg-cream-warm`}>
 
         {/* ═══ 顶栏 ═══ */}
         <header className="sticky top-0 z-10 border-b border-gold-200/20 bg-cream-warm/95 backdrop-blur-2xl px-3 py-2.5">

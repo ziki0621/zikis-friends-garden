@@ -42,7 +42,12 @@ type ConversationItem = {
   lastActivity: number;
 };
 
-export function AIFriendsInbox() {
+type AIFriendsInboxProps = {
+  onSelectConversation?: (id: string, type: "group" | "dm") => void;
+  activeConversationId?: string | null;
+};
+
+export function AIFriendsInbox({ onSelectConversation, activeConversationId }: AIFriendsInboxProps) {
   const [query, setQuery] = useState("");
   const [settings, setSettings] = useState<FriendSettingsMap>({});
   const [sourceGroups, setSourceGroups] = useState<FriendChatGroup[]>(friendChatGroups);
@@ -51,6 +56,7 @@ export function AIFriendsInbox() {
   const [pinned, setPinned] = useState<string[]>([]);
   const [menuTarget, setMenuTarget] = useState<string | null>(null);
   const [splash, setSplash] = useState(true);
+  const isDesktop = Boolean(onSelectConversation);
 
   const [unreadRefresh, setUnreadRefresh] = useState(0);
 
@@ -181,34 +187,53 @@ export function AIFriendsInbox() {
     [conversations]
   );
 
-  return (
-    <main className="app-backdrop h-dvh overflow-hidden relative">
-      {/* ═══ 入场动画 ═══ */}
-      <div
-        className={`absolute inset-0 z-50 flex items-center justify-center bg-cream-warm transition-all duration-700 ease-out pointer-events-none ${
-          splash ? "opacity-100" : "opacity-0"
-        }`}
-        aria-hidden={!splash}
-      >
-        <div className={`flex flex-col items-center gap-4 transition-all duration-700 delay-100 ${splash ? "translate-y-0 scale-100" : "translate-y-6 scale-95"}`}>
-          <div
-            className="text-[64px] animate-bounce select-none"
-            style={{ animationDuration: "2s" }}
-          >
-            🌿
+  function convContent(c: ConversationItem, isPinned: boolean) {
+    return (
+      <>
+        {c.type === "group" ? (
+          <GroupAvatarStack accent={c.accent} friends={c.configuredFriends} groupId={c.id} size="sm" />
+        ) : (
+          <AvatarCircle avatar={c.configuredFriends[0]?.avatar} emoji={c.configuredFriends[0]?.emoji} className="h-11 w-11 text-sm" color={c.accent} label={c.name} />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">
+              {isPinned && <Pin size={10} className="inline mr-1 text-gold-500 -translate-y-px" />}
+              {c.name}
+            </h2>
+            {c.lastTime ? <span className="shrink-0 text-[11px] text-ink-faint">{c.lastTime}</span> : null}
           </div>
-          <p className="font-semibold text-ink-deep tracking-[-0.01em]" style={{ fontFamily: "Playfair Display, serif" }}>
-            ziki 的朋友庄园
-          </p>
-          <div className="flex gap-1.5 pt-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-sage-400 animate-pulse" />
-            <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" style={{ animationDelay: "0.15s" }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" style={{ animationDelay: "0.3s" }} />
+          <div className="mt-0.5 flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-[13px] leading-5 text-ink-soft">{c.lastMessage}</p>
+            {c.unread > 0 && <span className="manor-badge">{c.unread}</span>}
           </div>
         </div>
-      </div>
+      </>
+    );
+  }
 
-      <div className="phone-shell mx-auto flex h-dvh min-h-0 max-w-[440px] flex-col bg-cream-warm">
+  return (
+    <main className={`${isDesktop ? "h-full flex flex-col bg-cream-warm" : "app-backdrop h-dvh overflow-hidden relative"}`}>
+      {!isDesktop && (
+        <div
+          className={`absolute inset-0 z-50 flex items-center justify-center bg-cream-warm transition-all duration-700 ease-out pointer-events-none ${
+            splash ? "opacity-100" : "opacity-0"
+          }`}
+          aria-hidden={!splash}
+        >
+          <div className={`flex flex-col items-center gap-4 transition-all duration-700 delay-100 ${splash ? "translate-y-0 scale-100" : "translate-y-6 scale-95"}`}>
+            <div className="text-[64px] animate-bounce select-none" style={{ animationDuration: "2s" }}>🌿</div>
+            <p className="font-semibold text-ink-deep tracking-[-0.01em]" style={{ fontFamily: "Playfair Display, serif" }}>ziki 的朋友庄园</p>
+            <div className="flex gap-1.5 pt-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-sage-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" style={{ animationDelay: "0.15s" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" style={{ animationDelay: "0.3s" }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`${isDesktop ? "h-full flex flex-col" : "phone-shell mx-auto flex h-dvh min-h-0 max-w-[440px] flex-col"} bg-cream-warm`}>
 
         {/* ═══ 头部 ═══ */}
         <header className="sticky top-0 z-10 bg-cream-warm/95 backdrop-blur-2xl px-5 pb-3 pt-5">
@@ -259,44 +284,35 @@ export function AIFriendsInbox() {
                     transition: `all 0.3s ease ${i * 0.03}s`
                   }}
                 >
-                  <Link
-                    className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 active:bg-manor-100 ${
-                      isPinned ? "bg-gold-50/30" : ""
-                    }`}
-                    href={c.type === "dm" ? `/ai-friends/dm/${c.id.replace("dm-", "")}` : `/ai-friends/${c.id}`}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      setMenuTarget(menuTarget === c.id ? null : c.id);
-                    }}
-                  >
-                    {/* 1. 头像 */}
-                    {c.type === "group" ? (
-                      <GroupAvatarStack accent={c.accent} friends={c.configuredFriends} groupId={c.id} size="sm" />
-                    ) : (
-                      <AvatarCircle avatar={c.configuredFriends[0]?.avatar} emoji={c.configuredFriends[0]?.emoji} className="h-11 w-11 text-sm" color={c.accent} label={c.name} />
-                    )}
-
-                    {/* 主体 */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        {/* 2. 名称 */}
-                        <h2 className="truncate text-[15px] font-semibold leading-5 text-ink-deep">
-                          {isPinned && <Pin size={10} className="inline mr-1 text-gold-500 -translate-y-px" />}
-                          {c.name}
-                        </h2>
-                        {/* 4. 时间 */}
-                        {c.lastTime ? (
-                          <span className="shrink-0 text-[11px] text-ink-faint">{c.lastTime}</span>
-                        ) : null}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        {/* 3. 最后一条消息 */}
-                        <p className="min-w-0 flex-1 truncate text-[13px] leading-5 text-ink-soft">{c.lastMessage}</p>
-                        {/* 5. 未读数 */}
-                        {c.unread > 0 && <span className="manor-badge">{c.unread}</span>}
-                      </div>
-                    </div>
-                  </Link>
+                  {isDesktop ? (
+                    <button
+                      className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors duration-150 active:bg-manor-100 ${
+                        isPinned ? "bg-gold-50/30" : ""
+                      } ${activeConversationId === c.id ? "bg-sage-50/60" : ""}`}
+                      onClick={() => onSelectConversation!(c.id, c.type)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setMenuTarget(menuTarget === c.id ? null : c.id);
+                      }}
+                    >
+                      {convContent(c, isPinned)}
+                      {/* 淡分割线 */}
+                      <div className="mx-4 border-b border-black/[0.03] absolute bottom-0 left-0 right-0" />
+                    </button>
+                  ) : (
+                    <Link
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors duration-150 active:bg-manor-100 ${
+                        isPinned ? "bg-gold-50/30" : ""
+                      }`}
+                      href={c.type === "dm" ? `/ai-friends/dm/${c.id.replace("dm-", "")}` : `/ai-friends/${c.id}`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setMenuTarget(menuTarget === c.id ? null : c.id);
+                      }}
+                    >
+                      {convContent(c, isPinned)}
+                    </Link>
+                  )}
 
                   {/* 右键/长按菜单 */}
                   {menuTarget === c.id && (
@@ -345,6 +361,7 @@ export function AIFriendsInbox() {
         </section>
 
         {/* ═══ 底部导航 ═══ */}
+        {!isDesktop && (
         <nav className="grid shrink-0 grid-cols-3 border-t border-gold-200/20 bg-cream-warm/95 px-2 py-2 text-[10px] font-medium backdrop-blur-2xl">
           <button className="relative flex flex-col items-center gap-1 text-sage-600">
             <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -364,6 +381,7 @@ export function AIFriendsInbox() {
             设置
           </Link>
         </nav>
+        )}
       </div>
 
     </main>
