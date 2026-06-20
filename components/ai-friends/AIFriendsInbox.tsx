@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { GitBranch, Key, Pin, PinOff, Search, Settings, Trash2, UserRound, Users } from "lucide-react";
+import { GitBranch, Key, Pin, PinOff, Plus, Search, Settings, Trash2, UserRound, Users } from "lucide-react";
 import { type AIFriend } from "@/lib/ai/friendGroup";
 import { friendChatGroups, type FriendChatGroup } from "@/lib/ai/friendChatGroups";
 import { GroupAvatarStack } from "@/components/ai-friends/GroupAvatarStack";
@@ -14,7 +14,8 @@ import {
 } from "@/components/ai-friends/friendSettings";
 import {
   deleteStoredFriendChatGroup,
-  readVisibleFriendChatGroups
+  readVisibleFriendChatGroups,
+  createStoredFriendChatGroup
 } from "@/components/ai-friends/friendChatGroupStorage";
 import {
   deleteStoredAIFriend,
@@ -57,6 +58,8 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
   const [pinned, setPinned] = useState<string[]>([]);
   const [menuTarget, setMenuTarget] = useState<string | null>(null);
   const [splash, setSplash] = useState(true);
+  const [quickCreate, setQuickCreate] = useState(false);
+  const [quickGroupName, setQuickGroupName] = useState("");
   const isDesktop = Boolean(onSelectConversation);
 
   const [unreadRefresh, setUnreadRefresh] = useState(0);
@@ -158,6 +161,14 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
   }, [conversations, query]);
 
   /* ── 操作 ── */
+  function doQuickCreate() {
+    const name = quickGroupName.trim();
+    if (!name) return;
+    const group = createStoredFriendChatGroup(name);
+    setQuickGroupName(""); setQuickCreate(false);
+    window.location.href = `/ai-friends/settings/${group.id}`;
+  }
+
   function deleteConversation(c: ConversationItem) {
     if (!window.confirm(`删除「${c.name}」？聊天记录也会移除。`)) return;
     if (c.type === "group") {
@@ -250,7 +261,7 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
               <Link
                 className="grid h-8 w-8 place-items-center rounded-full text-ink-muted transition hover:bg-manor-100 hover:text-ink-soft"
                 href="/ai-friends/setting"
-                title="API 设置"
+                title="设置"
               >
                 <Key size={15} />
               </Link>
@@ -261,8 +272,29 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
               >
                 <GitBranch size={16} />
               </Link>
+              <button
+                className="grid h-8 w-8 place-items-center rounded-full bg-sage-500 text-white shadow-manor-sage transition hover:bg-sage-600"
+                title="快速建群"
+                onClick={() => { setQuickCreate((c) => !c); setQuickGroupName(""); }}
+              >
+                <Plus size={18} />
+              </button>
             </div>
           </div>
+
+          {quickCreate && (
+            <form
+              className="mt-3 flex animate-fade-up items-center gap-2"
+              onSubmit={(e) => { e.preventDefault(); doQuickCreate(); }}
+            >
+              <input
+                className="manor-input h-9 min-w-0 flex-1 px-3.5 text-sm"
+                maxLength={18} placeholder="群聊名称..." autoFocus
+                value={quickGroupName} onChange={(e) => setQuickGroupName(e.target.value)}
+              />
+              <button className="manor-btn-primary h-9 px-4 text-sm disabled:opacity-40" disabled={quickGroupName.trim().length === 0} type="submit">创建</button>
+            </form>
+          )}
 
           <label className="mt-3 flex h-9 items-center gap-2.5 rounded-[14px] bg-white/80 px-3.5 text-ink-muted shadow-sm ring-1 ring-black/[0.03] transition focus-within:ring-gold-200/50">
             <Search size={15} />
