@@ -22,6 +22,7 @@ import {
 } from "@/components/ai-friends/aiFriendRosterStorage";
 import { getPinnedChats, pinChat, unpinChat } from "@/components/ai-friends/pinStorage";
 import { getLastActivity } from "@/components/ai-friends/activityStorage";
+import { formatRelativeTime } from "@/components/ai-friends/timeUtils";
 import { clearUnread, getUnread, seedInitialUnreads } from "@/components/ai-friends/unreadStorage";
 
 /* ═══ 统一的对话项类型 ═══ */
@@ -97,39 +98,43 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
     // 群聊
     const groupItems: ConversationItem[] = sourceGroups.map((group) => {
       const cfg = getConfiguredFriends(group.id, group.friends, settings);
+      const activity = getLastActivity(group.id);
       return {
         id: group.id,
         type: "group" as const,
         name: group.name,
         description: group.description,
         lastMessage: group.lastMessage,
-        lastTime: group.lastTime,
+        lastTime: activity ? formatRelativeTime(activity) : group.lastTime,
         unread: getUnread(group.id),
         accent: group.accent,
         style: group.style,
         friends: group.friends,
         configuredFriends: cfg,
         friendLine: cfg.map((f) => f.name).join("、"),
-        lastActivity: getLastActivity(group.id)
+        lastActivity: activity
       };
     });
 
     // 私聊（已创建的 AI 朋友）
-    const dmItems: ConversationItem[] = friends.map((friend) => ({
-      id: `dm-${friend.id}`,
-      type: "dm" as const,
-      name: friend.name,
-      description: friend.title,
-      lastMessage: friend.title,
-      lastTime: "",
-      unread: getUnread(`dm-${friend.id}`),
-      accent: friend.color,
-      style: `一对一私聊 · ${friend.relationship}`,
-      friends: [friend],
-      configuredFriends: [friend],
-      friendLine: "",
-      lastActivity: getLastActivity(`dm-${friend.id}`)
-    }));
+    const dmItems: ConversationItem[] = friends.map((friend) => {
+      const activity = getLastActivity(`dm-${friend.id}`);
+      return {
+        id: `dm-${friend.id}`,
+        type: "dm" as const,
+        name: friend.name,
+        description: friend.title,
+        lastMessage: friend.title,
+        lastTime: activity ? formatRelativeTime(activity) : "",
+        unread: getUnread(`dm-${friend.id}`),
+        accent: friend.color,
+        style: `一对一私聊 · ${friend.relationship}`,
+        friends: [friend],
+        configuredFriends: [friend],
+        friendLine: "",
+        lastActivity: activity
+      };
+    });
 
     const all = [...groupItems, ...dmItems];
 

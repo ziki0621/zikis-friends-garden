@@ -29,7 +29,8 @@ import { deleteStoredFriendChatGroup } from "@/components/ai-friends/friendChatG
 import { deleteStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
 import { unpinChat } from "@/components/ai-friends/pinStorage";
 import { touchChat } from "@/components/ai-friends/activityStorage";
-import { clearUnread, seedInitialUnreads } from "@/components/ai-friends/unreadStorage";
+import { formatRelativeTime } from "@/components/ai-friends/timeUtils";
+import { clearUnread, seedInitialUnreads, incrementUnread } from "@/components/ai-friends/unreadStorage";
 import {
   writePendingBatch, readPendingBatch, clearPendingBatch
 } from "@/components/ai-friends/pendingStorage";
@@ -40,8 +41,8 @@ import { useRouter } from "next/navigation";
 
 /* ── types ── */
 type TimelineItem =
-  | { id: string; type: "friend"; friendId: string; name: string; color: string; content: string; replyTo?: string; tone?: FriendReply["tone"]; isNew?: boolean }
-  | { id: string; type: "user"; content: string; quote?: QuoteTarget; isNew?: boolean }
+  | { id: string; type: "friend"; friendId: string; name: string; color: string; content: string; replyTo?: string; tone?: FriendReply["tone"]; isNew?: boolean; timestamp?: number }
+  | { id: string; type: "user"; content: string; quote?: QuoteTarget; isNew?: boolean; timestamp?: number }
   | { id: string; type: "time"; content: string };
 
 type ApiResponse = FriendGroupResponse & { provider: string; model: string; usingMock: boolean; warning?: string };
@@ -88,11 +89,24 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const runRef = useRef(0);
   const mountedRef = useRef(true);
+  const chatFocusedRef = useRef(true);
 
-  // 追踪组件挂载状态 —— deliver 依赖它判断是否还活着
+  // 追踪组件挂载状态 + 聊天是否被聚焦
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    chatFocusedRef.current = document.hasFocus();
+    const onFocus = () => { chatFocusedRef.current = true; };
+    const onBlur = () => { chatFocusedRef.current = false; };
+    const onVis = () => { chatFocusedRef.current = document.hasFocus(); };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      mountedRef.current = false;
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   });
 
   const chatHistory = useMemo<ChatHistoryMessage[]>(
@@ -191,7 +205,7 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
   /* ── send ── */
   async function sendMessage() {
     const msg = input.trim();
-    if (!msg || loading) return;
+    if (!msg) return;
     const runId = runRef.current + 1;
     runRef.current = runId;
     setInput("");
@@ -201,7 +215,7 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
     setLoading(true);
     setWaitingForApi(true);
     setTypingFriend(null);
-    setTimeline((c) => [...c, { id: crypto.randomUUID(), type: "user", content: msg, quote: qt ?? undefined, isNew: true }]);
+    setTimeline((c) => [...c, { id: crypto.randomUUID(), type: "user", content: msg, quote: qt ?? undefined, isNew: true, timestamp: Date.now() }]);
 
     try {
       const mem = readFriendMemory(group.id);
@@ -275,7 +289,7 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
   async function deliver(data: ApiResponse, runId: number, phase: SimulationPhase) {
     const items: TimelineItem[] = data.messages.map((m) => {
       const f = friends.find((x) => x.id === m.friendId) ?? friends[0];
-      return { id: crypto.randomUUID(), type: "friend", friendId: f.id, name: m.name || f.name, color: f.color, content: m.content, tone: m.tone, replyTo: m.replyTo, isNew: true };
+      return { id: crypto.randomUUID(), type: "friend", friendId: f.id, name: m.name || f.name, color: f.color, content: m.content, tone: m.tone, replyTo: m.replyTo, isNew: true, timestamp: Date.now() };
     });
     const out: Extract<TimelineItem, { type: "friend" }>[] = [];
     const sched = schedule(items, phase, group.id);
@@ -298,6 +312,8 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
 
       setTimeline((c) => [...c, item]);
       out.push(item);
+      // 用户不在看这个聊天 → 递增未读
+      if (!chatFocusedRef.current) incrementUnread(group.id);
       setTypingFriend(null);
 
       await sleep(t.afterSendMs);
@@ -514,7 +530,7 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
             </div>
             <button
               className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[16px] bg-sage-500 px-4 text-sm font-semibold text-white shadow-manor-sage transition hover:bg-sage-600 hover:shadow-md hover:-translate-y-px active:translate-y-0 disabled:opacity-30 disabled:shadow-none disabled:translate-y-0"
-              disabled={loading || input.trim().length === 0}
+              disabled={input.trim().length === 0}
               type="submit"
             >
               <Send size={15} />
