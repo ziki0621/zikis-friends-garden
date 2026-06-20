@@ -88,24 +88,18 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const runRef = useRef(0);
-  const mountedRef = useRef(true);
   const chatFocusedRef = useRef(true);
 
-  // 追踪组件挂载状态 + 聊天是否被聚焦
+  // 追踪焦点状态
   useEffect(() => {
-    mountedRef.current = true;
     chatFocusedRef.current = document.hasFocus();
     const onFocus = () => { chatFocusedRef.current = true; };
     const onBlur = () => { chatFocusedRef.current = false; };
-    const onVis = () => { chatFocusedRef.current = document.hasFocus(); };
     window.addEventListener("focus", onFocus);
     window.addEventListener("blur", onBlur);
-    document.addEventListener("visibilitychange", onVis);
     return () => {
-      mountedRef.current = false;
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("blur", onBlur);
-      document.removeEventListener("visibilitychange", onVis);
     };
   });
 
@@ -167,10 +161,7 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
     touchChat(group.id);
     clearUnread(group.id);
     seedInitialUnreads();
-    // 清除可能残留的旧 pending batch（防止切出再切入时回放旧消息）
-    const existing = readPendingBatch();
-    if (existing && existing.groupId === group.id) clearPendingBatch();
-    // 通知 inbox 刷新未读数
+    // 强制 inbox 重读未读数（桌面端 inbox 始终挂载，不会自动刷新）
     window.dispatchEvent(new Event("unread-cleared"));
     setWallpaper(getWallpaperClass());
     const onWallpaper = () => setWallpaper(getWallpaperClass());
@@ -298,24 +289,23 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
     });
     const out: Extract<TimelineItem, { type: "friend" }>[] = [];
     const sched = schedule(items, phase, group.id);
+    const myGroupId = group.id;
     await sleep(phase === "ambient" ? rnd(800, 1800) : rnd(380, 900));
 
     for (const [i, item] of items.entries()) {
       if (item.type !== "friend") continue;
 
-      // ★ 组件已卸载 → 什么都不做，pending batch 留着，回来时一次性回放
-      if (!mountedRef.current) return out;
-      if (runRef.current !== runId) return out;
+      // 若在此期间 group.id 变了（桌面端切换对话）→ 停止，batch 保留给新实例回放
+      if (group.id !== myGroupId || runRef.current !== runId) return out;
 
       const t = sched[i] ?? fallbackTiming();
       await sleep(t.beforeTypingMs);
-      if (!mountedRef.current || runRef.current !== runId) return out;
+      if (runRef.current !== runId) return out;
 
       setTypingFriend({ name: item.name, color: item.color, avatar: friends.find((f) => f.id === item.friendId)?.avatar });
       await sleep(t.typingMs);
-      if (!mountedRef.current || runRef.current !== runId) return out;
+      if (runRef.current !== runId) return out;
 
-      setTimeline((c) => [...c, item]);
       out.push(item);
       // 用户不在看这个聊天 → 递增未读
       if (!chatFocusedRef.current) incrementUnread(group.id);
@@ -324,10 +314,8 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
       await sleep(t.afterSendMs);
     }
 
-    // ★ 全部投递完成且组件还活着 → 清掉 pending
-    if (mountedRef.current) {
-      clearPendingBatch();
-    }
+    // ★ 全部投递完成 → 清掉 pending
+    clearPendingBatch();
     return out;
   }
 
