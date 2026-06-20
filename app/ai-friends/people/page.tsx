@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, GitBranch, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Camera, GitBranch, UserPlus, Users } from "lucide-react";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import {
   defaultUserProfile, type UserProfile, readUserProfile, writeUserProfile
@@ -36,6 +36,57 @@ export default function PeoplePage() {
     setEditingProfile(false);
     window.dispatchEvent(new Event("user-profile-changed"));
     refreshData();
+  }
+
+  function pickMyAvatar() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const url = await compressImage(file);
+        setDraftProfile((p) => ({ ...p, avatar: url }));
+      } catch (e) {
+        window.alert(e instanceof Error ? e.message : "处理失败");
+      }
+    };
+    input.click();
+  }
+
+  async function compressImage(file: File): Promise<string> {
+    if (!file.type.startsWith("image/")) throw new Error("请选择图片文件");
+    if (file.size > 4 * 1024 * 1024) throw new Error("图片太大，4MB 以内");
+    const src = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
+      r.onerror = () => reject(new Error("失败"));
+      r.readAsDataURL(file);
+    });
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image(); i.onload = () => resolve(i); i.onerror = () => reject(new Error("解析失败")); i.src = src;
+    });
+    const c = document.createElement("canvas"); c.width = c.height = 200;
+    const ctx = c.getContext("2d")!;
+    const side = Math.min(img.width, img.height);
+    ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 200, 200);
+    const blob = await new Promise<Blob | null>((r) => c.toBlob(r, "image/webp", 0.8));
+    if (!blob) return c.toDataURL("image/jpeg", 0.8);
+    return new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
+      r.onerror = () => reject(new Error("失败"));
+      r.readAsDataURL(blob);
+    });
+  }
+
+  function removeMyAvatar() {
+    setDraftProfile((p) => {
+      const next = { ...p };
+      delete next.avatar;
+      return next;
+    });
   }
 
   function doCreate(type: "group" | "friend") {
@@ -114,25 +165,26 @@ export default function PeoplePage() {
             {editingProfile ? (
               <div className="animate-fade-up space-y-3">
                 <div className="flex items-center gap-3">
-                  <AvatarCircle
-                    avatar={draftProfile.avatar}
-                    emoji={draftProfile.emoji}
-                    className="h-14 w-14 text-base shadow-md ring-[3px] ring-white"
-                    color={draftProfile.color}
-                    label={draftProfile.name}
-                  />
+                  <button className="relative shrink-0" onClick={pickMyAvatar} title="更换头像">
+                    <AvatarCircle
+                      avatar={draftProfile.avatar}
+                      emoji={draftProfile.emoji}
+                      className="h-14 w-14 text-base shadow-md ring-[3px] ring-white"
+                      color={draftProfile.color}
+                      label={draftProfile.name}
+                    />
+                    <span className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full bg-sage-500 text-white shadow-sm ring-2 ring-white">
+                      <Camera size={12} />
+                    </span>
+                  </button>
                   <div className="min-w-0 flex-1 space-y-2">
                     <input className="manor-input w-full px-3 py-2 text-[14px] font-semibold" maxLength={18} placeholder="昵称" value={draftProfile.name} onChange={(e) => setDraftProfile({ ...draftProfile, name: e.target.value })} />
                     <input className="manor-input w-full px-3 py-2 text-[13px]" maxLength={28} placeholder="一句话介绍" value={draftProfile.title} onChange={(e) => setDraftProfile({ ...draftProfile, title: e.target.value })} />
                   </div>
                 </div>
-                <input
-                  className="manor-input w-full px-3 py-2 text-[13px] text-center"
-                  maxLength={4}
-                  placeholder="emoji"
-                  value={draftProfile.emoji || ""}
-                  onChange={(e) => setDraftProfile({ ...draftProfile, emoji: e.target.value })}
-                />
+                {draftProfile.avatar && (
+                  <button className="text-[11px] text-rose-500 hover:text-rose-600" onClick={removeMyAvatar}>移除头像</button>
+                )}
                 <textarea className="manor-input w-full min-h-16 resize-none px-3 py-2 text-[13px] leading-5" maxLength={160} placeholder="我的状态..." value={draftProfile.about} onChange={(e) => setDraftProfile({ ...draftProfile, about: e.target.value })} />
                 <div className="flex gap-2">
                   <button className="manor-btn-primary flex-1 h-9 text-[13px]" onClick={saveProfile}>保存</button>
