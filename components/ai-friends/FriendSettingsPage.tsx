@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, Check, MessageCircle, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Check, MessageCircle, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { type AIFriend, getDefaultFriendTemplate } from "@/lib/ai/friendGroup";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { readStoredAIFriend, updateStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
@@ -259,7 +259,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
                     <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-ink-soft ml-auto">{m.value}</span>
                     {metricRows.length > 1 && (
                       <button className="grid h-5 w-5 place-items-center rounded-full text-ink-muted hover:text-rose-500 hover:bg-rose-50 ml-1" onClick={() => deleteMetricRow(m.key)} title="删除指标">
-                        <Minus size={12} />
+                        <X size={12} />
                       </button>
                     )}
                   </div>
@@ -299,7 +299,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
                   />
                   {fieldRows.length > 1 && (
                     <button className="grid h-5 w-5 place-items-center rounded-full text-ink-muted hover:text-rose-500 hover:bg-rose-50 ml-1 shrink-0" onClick={() => deleteFieldRow(f.key)} title="删除字段">
-                      <Minus size={12} />
+                      <X size={12} />
                     </button>
                   )}
                 </div>
