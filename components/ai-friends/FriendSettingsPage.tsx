@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, Check, MessageCircle, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import { ArrowLeft, Camera, Check, MessageCircle, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { type AIFriend, getDefaultFriendTemplate } from "@/lib/ai/friendGroup";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { readStoredAIFriend, updateStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
 
-/* ─── 默认模板（不可变，用于恢复）─── */
 const DEFAULT_METRIC_TEMPLATES = [
   { key: "m1", value: 50, label: "外向度", hint: "越高越主动开口、话多、爱热闹" },
   { key: "m2", value: 50, label: "共情度", hint: "越高越能感受到情绪、喜欢先安慰" },
@@ -28,6 +27,9 @@ const DEFAULT_FIELD_TEMPLATES = [
 type MetricRow = { key: string; value: number; label: string; hint: string };
 type FieldRow = { key: string; label: string; hint: string; value: string };
 
+let idCounter = 0;
+function uid() { return `custom-${++idCounter}-${Math.random().toString(36).slice(2, 6)}`; }
+
 export function FriendSettingsPage({ friendId }: { friendId: string }) {
   const [friend, setFriend] = useState<AIFriend | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -37,11 +39,9 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
   const [title, setTitle] = useState("");
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
 
-  // 量化指标行（可编辑标签）
   const [metricRows, setMetricRows] = useState<MetricRow[]>(() =>
     DEFAULT_METRIC_TEMPLATES.map((m) => ({ ...m }))
   );
-  // 文字说明行（可编辑标签）
   const [fieldRows, setFieldRows] = useState<FieldRow[]>(() =>
     DEFAULT_FIELD_TEMPLATES.map((f) => ({ ...f }))
   );
@@ -54,7 +54,6 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
       setTitle(f.title);
       setAvatar(f.avatar);
 
-      // 从 localStorage 读取用户自定义的指标和字段
       const savedMetrics = loadCustomMetrics(friendId);
       const savedFields = loadCustomFields(friendId);
 
@@ -68,10 +67,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
       }
 
       if (savedFields) {
-        setFieldRows(savedFields.map((sf) => ({
-          ...sf,
-          value: getFieldFallback(f, sf.key)
-        })));
+        setFieldRows(savedFields);
       } else {
         setFieldRows(DEFAULT_FIELD_TEMPLATES.map((ft) => ({
           ...ft,
@@ -82,7 +78,6 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
     setLoaded(true);
   }, [friendId]);
 
-  /* ── 缺省值：首次打开从预设人物中推导 ── */
   function getMetricFallback(f: AIFriend, label: string): number {
     const m = getDefaultMetrics(f);
     const idx = DEFAULT_METRIC_TEMPLATES.findIndex((t) => t.label === label);
@@ -113,8 +108,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
   }
   if (!friend) return null;
 
-  /* ── 操作 ── */
-
+  /* ── Metric CRUD ── */
   function updateMetricValue(key: string, value: number) {
     setMetricRows((c) => c.map((r) => (r.key === key ? { ...r, value: Math.max(0, Math.min(100, value)) } : r)));
     setSaved(false);
@@ -124,24 +118,46 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
     setSaved(false);
   }
   function updateMetricHint(key: string, hint: string) {
-    setMetricRows((c) => c.map((r) => (r.key === key ? { ...r, hint: hint.slice(0, 40) } : r)));
+    setMetricRows((c) => c.map((r) => (r.key === key ? { ...r, hint: hint.slice(0, 60) } : r)));
     setSaved(false);
   }
+  function addMetricRow() {
+    setMetricRows((c) => [...c, { key: uid(), value: 50, label: "新指标", hint: "" }]);
+    setSaved(false);
+  }
+  function deleteMetricRow(key: string) {
+    if (metricRows.length <= 1) return;
+    setMetricRows((c) => c.filter((r) => r.key !== key));
+    setSaved(false);
+  }
+
+  /* ── Field CRUD ── */
   function updateFieldLabel(key: string, label: string) {
-    setFieldRows((c) => c.map((r) => (r.key === key ? { ...r, label: label.slice(0, 12) } : r)));
+    setFieldRows((c) => c.map((r) => (r.key === key ? { ...r, label: label.slice(0, 16) } : r)));
+    setSaved(false);
+  }
+  function updateFieldHint(key: string, hint: string) {
+    setFieldRows((c) => c.map((r) => (r.key === key ? { ...r, hint: hint.slice(0, 60) } : r)));
     setSaved(false);
   }
   function updateFieldValue(key: string, value: string) {
     setFieldRows((c) => c.map((r) => (r.key === key ? { ...r, value } : r)));
     setSaved(false);
   }
+  function addFieldRow() {
+    setFieldRows((c) => [...c, { key: uid(), label: "新字段", hint: "", value: "" }]);
+    setSaved(false);
+  }
+  function deleteFieldRow(key: string) {
+    if (fieldRows.length <= 1) return;
+    setFieldRows((c) => c.filter((r) => r.key !== key));
+    setSaved(false);
+  }
 
   function saveAll() {
-    // 持久化自定义指标和字段
     saveCustomMetrics(friendId, metricRows);
     saveCustomFields(friendId, fieldRows);
 
-    // 把字段写回 AIFriend 结构以便聊天时使用
     const fieldMap: Record<string, string> = {};
     fieldRows.forEach((r) => { fieldMap[r.key] = r.value.trim(); });
 
@@ -156,15 +172,13 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
     setSaved(true);
   }
 
-  /** 一键清空：所有字段归零 / 空白 */
   function clearAll() {
-    if (!window.confirm("确定清空所有自定义设定？\n\n量化指标归零，标签和文字全部清空。")) return;
-    setMetricRows((c) => c.map((r) => ({ ...r, value: 0, label: "", hint: "" })));
-    setFieldRows((c) => c.map((r) => ({ ...r, value: "", label: "" })));
+    if (!window.confirm("确定清空所有自定义设定？\n\n所有量化指标和文字字段将被清空（至少保留一行）。")) return;
+    setMetricRows([{ key: uid(), value: 0, label: "", hint: "" }]);
+    setFieldRows([{ key: uid(), value: "", label: "", hint: "" }]);
     setSaved(false);
   }
 
-  /** 恢复默认模板 */
   function resetToDefault() {
     if (!window.confirm("确定恢复为默认模板？\n\n你当前的编辑将被覆盖。")) return;
     const f = friend!;
@@ -175,7 +189,7 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
     setSaved(false);
   }
 
-  function pickAvatar() { /* unchanged */ pickAvatarFn(setAvatar, setSaved); }
+  function pickAvatar() { pickAvatarFn(setAvatar, setSaved); }
 
   const displayAvatar = avatar !== undefined ? avatar : friend.avatar;
   const displayEmoji = displayAvatar ? undefined : friend.emoji;
@@ -225,28 +239,34 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
             </div>
           </div>
 
-          {/* 量化指标（可编辑标签） */}
+          {/* 量化指标 */}
           <div className="border-b border-gold-200/20 px-4 py-4">
-            <h2 className="text-[13px] font-semibold text-ink-deep mb-3">量化指标 (0-100)</h2>
-            <div className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[13px] font-semibold text-ink-deep">量化指标 (0-100)</h2>
+              <button className="grid h-7 w-7 place-items-center rounded-full bg-sage-500 text-white shadow-manor-sage hover:bg-sage-600" onClick={addMetricRow} title="新增指标">
+                <Plus size={14} />
+              </button>
+            </div>
+            <div className="space-y-3">
               {metricRows.map((m) => (
-                <div key={m.key} className="group rounded-[12px] bg-cream-warm/60 px-3 py-2.5 ring-1 ring-gold-200/10">
-                  {/* 标签行：可编辑 */}
+                <div key={m.key} className="group relative rounded-[12px] bg-cream-warm/60 px-3 py-2.5 ring-1 ring-gold-200/10">
                   <div className="flex items-center gap-1.5 mb-1">
                     <input
                       className="bg-transparent text-[12px] font-semibold text-ink-soft w-[72px] outline-none border-b border-transparent focus:border-sage-300 px-0.5"
-                      maxLength={12}
-                      placeholder="指标名"
-                      value={m.label}
+                      maxLength={12} placeholder="指标名" value={m.label}
                       onChange={(e) => updateMetricLabel(m.key, e.target.value)}
                     />
                     <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-ink-soft ml-auto">{m.value}</span>
+                    {metricRows.length > 1 && (
+                      <button className="grid h-5 w-5 place-items-center rounded-full text-ink-faint/40 hover:text-rose-500 hover:bg-rose-50 ml-1 sm:opacity-0 sm:group-hover:opacity-100" onClick={() => deleteMetricRow(m.key)} title="删除指标">
+                        <Minus size={11} />
+                      </button>
+                    )}
                   </div>
                   <input className="h-1.5 w-full accent-sage-500" type="range" min={0} max={100} value={m.value} onChange={(e) => updateMetricValue(m.key, Number(e.target.value))} />
                   <input
-                    className="mt-1.5 w-full bg-transparent text-[10px] text-ink-faint outline-none border-b border-transparent focus:border-sage-200/50 px-0.5"
-                    maxLength={40}
-                    placeholder="指标说明..."
+                    className="mt-1.5 w-full bg-transparent text-[11px] text-ink-soft outline-none border-b border-transparent focus:border-sage-200/50 px-0.5"
+                    maxLength={60} placeholder="指标说明..."
                     value={m.hint}
                     onChange={(e) => updateMetricHint(m.key, e.target.value)}
                   />
@@ -255,21 +275,38 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
             </div>
           </div>
 
-          {/* 文字说明（可编辑标签 + 值） */}
-          <div className="px-4 py-4 space-y-4">
+          {/* 文字说明 */}
+          <div className="px-4 py-4 space-y-3">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-[13px] font-semibold text-ink-deep">人物说明</h2>
+              <button className="grid h-7 w-7 place-items-center rounded-full bg-sage-500 text-white shadow-manor-sage hover:bg-sage-600" onClick={addFieldRow} title="新增字段">
+                <Plus size={14} />
+              </button>
+            </div>
             {fieldRows.map((f) => (
-              <div key={f.key} className="group rounded-[12px] bg-cream-warm/60 px-3 py-2.5 ring-1 ring-gold-200/10">
-                <input
-                  className="mb-1.5 bg-transparent text-[11px] font-semibold text-ink-muted w-[80px] outline-none border-b border-transparent focus:border-sage-300 px-0.5"
-                  maxLength={12}
-                  placeholder="字段名"
-                  value={f.label}
-                  onChange={(e) => updateFieldLabel(f.key, e.target.value)}
-                />
+              <div key={f.key} className="group relative rounded-[12px] bg-cream-warm/60 px-3 py-2.5 ring-1 ring-gold-200/10">
+                <div className="flex items-center justify-between mb-1.5">
+                  <input
+                    className="bg-transparent text-[11px] font-semibold text-ink-soft w-[80px] outline-none border-b border-transparent focus:border-sage-300 px-0.5"
+                    maxLength={16} placeholder="字段名" value={f.label}
+                    onChange={(e) => updateFieldLabel(f.key, e.target.value)}
+                  />
+                  <input
+                    className="flex-1 ml-2 bg-transparent text-[10px] text-ink-muted outline-none border-b border-transparent focus:border-sage-200/50 px-0.5"
+                    maxLength={60} placeholder="占位提示..."
+                    value={f.hint}
+                    onChange={(e) => updateFieldHint(f.key, e.target.value)}
+                  />
+                  {fieldRows.length > 1 && (
+                    <button className="grid h-5 w-5 place-items-center rounded-full text-ink-faint/40 hover:text-rose-500 hover:bg-rose-50 ml-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100" onClick={() => deleteFieldRow(f.key)} title="删除字段">
+                      <Minus size={11} />
+                    </button>
+                  )}
+                </div>
                 <textarea
                   className="manor-input min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5"
                   maxLength={220}
-                  placeholder={f.hint || ""}
+                  placeholder={f.hint || "描述..."}
                   value={f.value}
                   onChange={(e) => updateFieldValue(f.key, e.target.value)}
                 />
@@ -298,7 +335,6 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
 
 /* ─── helpers ─── */
 
-/** 根据预设人物推导默认量化指标 */
 function getDefaultMetrics(f: AIFriend): Record<string, number> {
   const text = (f.name + f.title + f.personality + f.job + f.careFocus + f.quirks + f.id).toLowerCase();
   let m1 = 50, m2 = 50, m3 = 50, m4 = 50, m5 = 50;
@@ -315,7 +351,7 @@ function getDefaultMetrics(f: AIFriend): Record<string, number> {
   return { m1, m2, m3, m4, m5 };
 }
 
-/* ─── localStorage 持久化自定义指标/字段 ─── */
+/* ─── localStorage ─── */
 
 const METRICS_STORAGE_PREFIX = "ziki-custom-metrics:";
 const FIELDS_STORAGE_PREFIX = "ziki-custom-fields:";
@@ -325,12 +361,12 @@ function loadCustomMetrics(friendId: string): MetricRow[] | null {
     const raw = localStorage.getItem(METRICS_STORAGE_PREFIX + friendId);
     if (!raw) return null;
     const arr = JSON.parse(raw);
-    if (!Array.isArray(arr) || arr.length !== 5) return null;
+    if (!Array.isArray(arr) || arr.length === 0) return null;
     return arr.map((m: any) => ({
-      key: typeof m.key === "string" ? m.key : "m1",
+      key: typeof m.key === "string" ? m.key : uid(),
       value: typeof m.value === "number" ? m.value : 50,
       label: typeof m.label === "string" ? m.label.slice(0, 12) : "",
-      hint: typeof m.hint === "string" ? m.hint.slice(0, 40) : ""
+      hint: typeof m.hint === "string" ? m.hint.slice(0, 60) : ""
     }));
   } catch { return null; }
 }
@@ -344,11 +380,11 @@ function loadCustomFields(friendId: string): FieldRow[] | null {
     const raw = localStorage.getItem(FIELDS_STORAGE_PREFIX + friendId);
     if (!raw) return null;
     const arr = JSON.parse(raw);
-    if (!Array.isArray(arr) || arr.length !== 6) return null;
+    if (!Array.isArray(arr) || arr.length === 0) return null;
     return arr.map((f: any) => ({
-      key: typeof f.key === "string" ? f.key : "",
-      label: typeof f.label === "string" ? f.label.slice(0, 12) : "",
-      hint: typeof f.hint === "string" ? f.hint.slice(0, 40) : DEFAULT_FIELD_TEMPLATES.find((d) => d.key === f.key)?.hint || "",
+      key: typeof f.key === "string" ? f.key : uid(),
+      label: typeof f.label === "string" ? f.label.slice(0, 16) : "",
+      hint: typeof f.hint === "string" ? f.hint.slice(0, 60) : DEFAULT_FIELD_TEMPLATES.find((d) => d.key === f.key)?.hint || "",
       value: typeof f.value === "string" ? f.value : ""
     }));
   } catch { return null; }
@@ -360,10 +396,7 @@ function saveCustomFields(friendId: string, rows: FieldRow[] | null) {
 
 /* ─── 头像上传 ─── */
 
-function pickAvatarFn(
-  setAvatar: (url: string) => void,
-  setSaved: (v: boolean) => void
-) {
+function pickAvatarFn(setAvatar: (url: string) => void, setSaved: (v: boolean) => void) {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/png,image/jpeg,image/webp";
@@ -372,11 +405,8 @@ function pickAvatarFn(
     if (!file) return;
     try {
       const url = await compressAndReadImage2(file);
-      setAvatar(url);
-      setSaved(false);
-    } catch (e) {
-      window.alert(e instanceof Error ? e.message : "处理失败");
-    }
+      setAvatar(url); setSaved(false);
+    } catch (e) { window.alert(e instanceof Error ? e.message : "处理失败"); }
   };
   input.click();
 }
@@ -391,17 +421,13 @@ async function compressAndReadImage2(file: File): Promise<string> {
     r.readAsDataURL(file);
   });
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = () => reject(new Error("解析失败"));
-    i.src = src;
+    const i = new Image(); i.onload = () => resolve(i); i.onerror = () => reject(new Error("解析失败")); i.src = src;
   });
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 200;
+  const canvas = document.createElement("canvas"); canvas.width = canvas.height = 200;
   const ctx = canvas.getContext("2d")!;
   const side = Math.min(img.width, img.height);
   ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 200, 200);
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.8));
+  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/webp", 0.8));
   if (!blob) return canvas.toDataURL("image/jpeg", 0.8);
   return new Promise<string>((resolve, reject) => {
     const r = new FileReader();
