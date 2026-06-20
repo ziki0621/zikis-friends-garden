@@ -2,34 +2,49 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, Check, MessageCircle, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, Camera, Check, MessageCircle, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { type AIFriend, getDefaultFriendTemplate } from "@/lib/ai/friendGroup";
 import { AvatarCircle } from "@/components/ai-friends/AvatarCircle";
 import { readStoredAIFriend, updateStoredAIFriend } from "@/components/ai-friends/aiFriendRosterStorage";
 
-const METRICS = [
-  { key: "extraversion", label: "外向度", hint: "越高越主动开口、话多、爱热闹" },
-  { key: "empathy", label: "共情度", hint: "越高越能感受到情绪、喜欢先安慰" },
-  { key: "analysis", label: "分析度", hint: "越高越喜欢拆问题、讲逻辑、列结构" },
-  { key: "drive", label: "驱动力", hint: "越高越催人行动、给压力、推进展" },
-  { key: "playfulness", label: "玩心度", hint: "越高越爱开玩笑、调侃、接梗" }
-] as const;
+/* ─── 默认模板（不可变，用于恢复）─── */
+const DEFAULT_METRIC_TEMPLATES = [
+  { key: "m1", value: 50, label: "外向度", hint: "越高越主动开口、话多、爱热闹" },
+  { key: "m2", value: 50, label: "共情度", hint: "越高越能感受到情绪、喜欢先安慰" },
+  { key: "m3", value: 50, label: "分析度", hint: "越高越喜欢拆问题、讲逻辑、列结构" },
+  { key: "m4", value: 50, label: "驱动力", hint: "越高越催人行动、给压力、推进展" },
+  { key: "m5", value: 50, label: "玩心度", hint: "越高越爱开玩笑、调侃、接梗" }
+];
+
+const DEFAULT_FIELD_TEMPLATES = [
+  { key: "personality", label: "性格底色", hint: "她/他是什么样的性格...", value: "" },
+  { key: "style", label: "说话风格", hint: "她/他怎么说话...", value: "" },
+  { key: "job", label: "群内分工", hint: "在群聊里负责什么...", value: "" },
+  { key: "careFocus", label: "关心的事", hint: "最关心什么...", value: "" },
+  { key: "quirks", label: "小习惯", hint: "有什么口头禅或小动作...", value: "" },
+  { key: "boundaries", label: "边界", hint: "不能做什么...", value: "" }
+];
+
+type MetricRow = { key: string; value: number; label: string; hint: string };
+type FieldRow = { key: string; label: string; hint: string; value: string };
 
 export function FriendSettingsPage({ friendId }: { friendId: string }) {
   const [friend, setFriend] = useState<AIFriend | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const [metrics, setMetrics] = useState<Record<string, number>>({});
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
-  const [personality, setPersonality] = useState("");
-  const [style, setStyle] = useState("");
-  const [job, setJob] = useState("");
-  const [careFocus, setCareFocus] = useState("");
-  const [quirks, setQuirks] = useState("");
-  const [boundaries, setBoundaries] = useState("");
+
+  // 量化指标行（可编辑标签）
+  const [metricRows, setMetricRows] = useState<MetricRow[]>(() =>
+    DEFAULT_METRIC_TEMPLATES.map((m) => ({ ...m }))
+  );
+  // 文字说明行（可编辑标签）
+  const [fieldRows, setFieldRows] = useState<FieldRow[]>(() =>
+    DEFAULT_FIELD_TEMPLATES.map((f) => ({ ...f }))
+  );
 
   useEffect(() => {
     const f = readStoredAIFriend(friendId);
@@ -38,16 +53,52 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
       setName(f.name);
       setTitle(f.title);
       setAvatar(f.avatar);
-      setPersonality(f.personality);
-      setStyle(f.style);
-      setJob(f.job);
-      setCareFocus(f.careFocus);
-      setQuirks(f.quirks);
-      setBoundaries(f.boundaries);
-      setMetrics(getFriendMetrics(f));
+
+      // 从 localStorage 读取用户自定义的指标和字段
+      const savedMetrics = loadCustomMetrics(friendId);
+      const savedFields = loadCustomFields(friendId);
+
+      if (savedMetrics) {
+        setMetricRows(savedMetrics);
+      } else {
+        setMetricRows(DEFAULT_METRIC_TEMPLATES.map((m) => ({
+          ...m,
+          value: getMetricFallback(f, m.label)
+        })));
+      }
+
+      if (savedFields) {
+        setFieldRows(savedFields.map((sf) => ({
+          ...sf,
+          value: getFieldFallback(f, sf.key)
+        })));
+      } else {
+        setFieldRows(DEFAULT_FIELD_TEMPLATES.map((ft) => ({
+          ...ft,
+          value: getFieldFallback(f, ft.key)
+        })));
+      }
     }
     setLoaded(true);
   }, [friendId]);
+
+  /* ── 缺省值：首次打开从预设人物中推导 ── */
+  function getMetricFallback(f: AIFriend, label: string): number {
+    const m = getDefaultMetrics(f);
+    const idx = DEFAULT_METRIC_TEMPLATES.findIndex((t) => t.label === label);
+    if (idx >= 0) {
+      const keys = ["m1", "m2", "m3", "m4", "m5"] as const;
+      return m[keys[idx]] ?? 50;
+    }
+    return 50;
+  }
+  function getFieldFallback(f: AIFriend, key: string): string {
+    const map: Record<string, string | undefined> = {
+      personality: f.personality, style: f.style, job: f.job,
+      careFocus: f.careFocus, quirks: f.quirks, boundaries: f.boundaries
+    };
+    return map[key]?.trim() || "";
+  }
 
   if (!friend && loaded) {
     return (
@@ -60,97 +111,71 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
       </main>
     );
   }
-
   if (!friend) return null;
 
-  function updateMetric(key: string, value: number) {
-    setMetrics((c) => ({ ...c, [key]: Math.max(0, Math.min(100, value)) }));
+  /* ── 操作 ── */
+
+  function updateMetricValue(key: string, value: number) {
+    setMetricRows((c) => c.map((r) => (r.key === key ? { ...r, value: Math.max(0, Math.min(100, value)) } : r)));
     setSaved(false);
   }
-
-  function pickAvatar() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/png,image/jpeg,image/webp";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const url = await compressAndReadImage(file);
-        setAvatar(url);
-        setSaved(false);
-      } catch (e) {
-        window.alert(e instanceof Error ? e.message : "处理失败");
-      }
-    };
-    input.click();
+  function updateMetricLabel(key: string, label: string) {
+    setMetricRows((c) => c.map((r) => (r.key === key ? { ...r, label: label.slice(0, 12) } : r)));
+    setSaved(false);
   }
-
-  async function compressAndReadImage(file: File): Promise<string> {
-    if (!file.type.startsWith("image/")) throw new Error("请选择图片文件");
-    if (file.size > 4 * 1024 * 1024) throw new Error("图片太大，4MB 以内");
-
-    const src = await new Promise<string>((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
-      r.onerror = () => reject(new Error("失败"));
-      r.readAsDataURL(file);
-    });
-
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("解析失败"));
-      i.src = src;
-    });
-
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 200;
-    const ctx = canvas.getContext("2d")!;
-    const side = Math.min(img.width, img.height);
-    ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 200, 200);
-
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.8));
-    if (!blob) return canvas.toDataURL("image/jpeg", 0.8);
-
-    return new Promise<string>((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
-      r.onerror = () => reject(new Error("失败"));
-      r.readAsDataURL(blob);
-    });
+  function updateMetricHint(key: string, hint: string) {
+    setMetricRows((c) => c.map((r) => (r.key === key ? { ...r, hint: hint.slice(0, 40) } : r)));
+    setSaved(false);
   }
-
-  function removeAvatar() {
-    setAvatar(undefined);
+  function updateFieldLabel(key: string, label: string) {
+    setFieldRows((c) => c.map((r) => (r.key === key ? { ...r, label: label.slice(0, 12) } : r)));
+    setSaved(false);
+  }
+  function updateFieldValue(key: string, value: string) {
+    setFieldRows((c) => c.map((r) => (r.key === key ? { ...r, value } : r)));
     setSaved(false);
   }
 
   function saveAll() {
+    // 持久化自定义指标和字段
+    saveCustomMetrics(friendId, metricRows);
+    saveCustomFields(friendId, fieldRows);
+
+    // 把字段写回 AIFriend 结构以便聊天时使用
+    const fieldMap: Record<string, string> = {};
+    fieldRows.forEach((r) => { fieldMap[r.key] = r.value.trim(); });
+
     updateStoredAIFriend(friendId, {
       name: name.trim() || friend!.name,
       title: title.trim() || friend!.title,
       avatar: avatar ?? friend!.avatar,
-      personality: personality.trim() || friend!.personality,
-      style: style.trim() || friend!.style,
-      job: job.trim() || friend!.job,
-      careFocus: careFocus.trim() || friend!.careFocus,
-      quirks: quirks.trim() || friend!.quirks,
-      boundaries: boundaries.trim() || friend!.boundaries
+      ...fieldMap
     });
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("friend-updated"));
     setSaved(true);
   }
 
-  function resetAll() {
-    const fallback = getDefaultFriendTemplate(friendId);
-    setName(fallback.name); setTitle(fallback.title); setAvatar(fallback.avatar);
-    setPersonality(fallback.personality); setStyle(fallback.style); setJob(fallback.job);
-    setCareFocus(fallback.careFocus); setQuirks(fallback.quirks); setBoundaries(fallback.boundaries);
-    setMetrics(getFriendMetrics(fallback));
+  /** 一键清空：所有字段归零 / 空白 */
+  function clearAll() {
+    if (!window.confirm("确定清空所有自定义设定？\n\n量化指标归零，标签和文字全部清空。")) return;
+    setMetricRows((c) => c.map((r) => ({ ...r, value: 0, label: "", hint: "" })));
+    setFieldRows((c) => c.map((r) => ({ ...r, value: "", label: "" })));
     setSaved(false);
   }
+
+  /** 恢复默认模板 */
+  function resetToDefault() {
+    if (!window.confirm("确定恢复为默认模板？\n\n你当前的编辑将被覆盖。")) return;
+    const f = friend!;
+    saveCustomMetrics(friendId, null);
+    saveCustomFields(friendId, null);
+    setMetricRows(DEFAULT_METRIC_TEMPLATES.map((m) => ({ ...m, value: getMetricFallback(f, m.label) })));
+    setFieldRows(DEFAULT_FIELD_TEMPLATES.map((ft) => ({ ...ft, value: getFieldFallback(f, ft.key) })));
+    setSaved(false);
+  }
+
+  function pickAvatar() { /* unchanged */ pickAvatarFn(setAvatar, setSaved); }
 
   const displayAvatar = avatar !== undefined ? avatar : friend.avatar;
   const displayEmoji = displayAvatar ? undefined : friend.emoji;
@@ -181,23 +206,13 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
           <div className="border-b border-gold-200/20 px-4 py-4">
             <div className="flex items-center gap-4">
               <button className="relative shrink-0" onClick={pickAvatar} title="更换头像">
-                <AvatarCircle
-                  avatar={displayAvatar}
-                  emoji={displayEmoji}
-                  className="h-16 w-16 text-xl ring-[3px] ring-white shadow-md"
-                  color={friend.color}
-                  label={name || friend.name}
-                />
-                <span className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full bg-sage-500 text-white shadow-sm ring-2 ring-white">
-                  <Camera size={12} />
-                </span>
+                <AvatarCircle avatar={displayAvatar} emoji={displayEmoji} className="h-16 w-16 text-xl ring-[3px] ring-white shadow-md" color={friend.color} label={name || friend.name} />
+                <span className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full bg-sage-500 text-white shadow-sm ring-2 ring-white"><Camera size={12} /></span>
               </button>
               <div>
                 <p className="font-semibold text-ink-deep">点击更换头像</p>
                 <p className="mt-0.5 text-xs text-ink-muted">支持 PNG / JPEG / WebP</p>
-                {displayAvatar && (
-                  <button className="mt-1 text-[11px] text-rose-500 hover:text-rose-600" onClick={removeAvatar}>移除头像</button>
-                )}
+                {displayAvatar && <button className="mt-1 text-[11px] text-rose-500 hover:text-rose-600" onClick={() => { setAvatar(undefined); setSaved(false); }}>移除头像</button>}
               </div>
             </div>
           </div>
@@ -210,82 +225,188 @@ export function FriendSettingsPage({ friendId }: { friendId: string }) {
             </div>
           </div>
 
-          {/* 量化指标 */}
+          {/* 量化指标（可编辑标签） */}
           <div className="border-b border-gold-200/20 px-4 py-4">
             <h2 className="text-[13px] font-semibold text-ink-deep mb-3">量化指标 (0-100)</h2>
-            <div className="space-y-3">
-              {METRICS.map((m) => (
-                <label key={m.key} className="block">
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-[12px] font-semibold text-ink-soft">{m.label}</span>
-                    <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-ink-soft">{metrics[m.key] ?? 50}</span>
+            <div className="space-y-4">
+              {metricRows.map((m) => (
+                <div key={m.key} className="group rounded-[12px] bg-cream-warm/60 px-3 py-2.5 ring-1 ring-gold-200/10">
+                  {/* 标签行：可编辑 */}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <input
+                      className="bg-transparent text-[12px] font-semibold text-ink-soft w-[72px] outline-none border-b border-transparent focus:border-sage-300 px-0.5"
+                      maxLength={12}
+                      placeholder="指标名"
+                      value={m.label}
+                      onChange={(e) => updateMetricLabel(m.key, e.target.value)}
+                    />
+                    <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-ink-soft ml-auto">{m.value}</span>
                   </div>
-                  <input className="h-1.5 w-full accent-sage-500" type="range" min={0} max={100} value={metrics[m.key] ?? 50} onChange={(e) => updateMetric(m.key, Number(e.target.value))} />
-                  <p className="mt-0.5 text-[10px] text-ink-faint">{m.hint}</p>
-                </label>
+                  <input className="h-1.5 w-full accent-sage-500" type="range" min={0} max={100} value={m.value} onChange={(e) => updateMetricValue(m.key, Number(e.target.value))} />
+                  <input
+                    className="mt-1.5 w-full bg-transparent text-[10px] text-ink-faint outline-none border-b border-transparent focus:border-sage-200/50 px-0.5"
+                    maxLength={40}
+                    placeholder="指标说明..."
+                    value={m.hint}
+                    onChange={(e) => updateMetricHint(m.key, e.target.value)}
+                  />
+                </div>
               ))}
             </div>
           </div>
 
-          {/* 人物说明 */}
-          <div className="px-4 py-4 space-y-3">
-            <label className="block text-[11px] font-semibold text-ink-muted">性格底色
-              <textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={personality} onChange={(e) => { setPersonality(e.target.value); setSaved(false); }} placeholder="她/他是什么样的性格..." />
-            </label>
-            <label className="block text-[11px] font-semibold text-ink-muted">说话风格
-              <textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={style} onChange={(e) => { setStyle(e.target.value); setSaved(false); }} placeholder="她/他怎么说话..." />
-            </label>
-            <label className="block text-[11px] font-semibold text-ink-muted">群内分工
-              <textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={job} onChange={(e) => { setJob(e.target.value); setSaved(false); }} placeholder="在群聊里负责什么..." />
-            </label>
-            <label className="block text-[11px] font-semibold text-ink-muted">关心的事
-              <textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={careFocus} onChange={(e) => { setCareFocus(e.target.value); setSaved(false); }} placeholder="最关心什么..." />
-            </label>
-            <label className="block text-[11px] font-semibold text-ink-muted">小习惯
-              <textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={quirks} onChange={(e) => { setQuirks(e.target.value); setSaved(false); }} placeholder="有什么口头禅或小动作..." />
-            </label>
-            <label className="block text-[11px] font-semibold text-ink-muted">边界
-              <textarea className="manor-input mt-1 min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5" maxLength={220} value={boundaries} onChange={(e) => { setBoundaries(e.target.value); setSaved(false); }} placeholder="不能做什么..." />
-            </label>
+          {/* 文字说明（可编辑标签 + 值） */}
+          <div className="px-4 py-4 space-y-4">
+            {fieldRows.map((f) => (
+              <div key={f.key} className="group rounded-[12px] bg-cream-warm/60 px-3 py-2.5 ring-1 ring-gold-200/10">
+                <input
+                  className="mb-1.5 bg-transparent text-[11px] font-semibold text-ink-muted w-[80px] outline-none border-b border-transparent focus:border-sage-300 px-0.5"
+                  maxLength={12}
+                  placeholder="字段名"
+                  value={f.label}
+                  onChange={(e) => updateFieldLabel(f.key, e.target.value)}
+                />
+                <textarea
+                  className="manor-input min-h-16 w-full resize-none px-3 py-2 text-[13px] leading-5"
+                  maxLength={220}
+                  placeholder={f.hint || ""}
+                  value={f.value}
+                  onChange={(e) => updateFieldValue(f.key, e.target.value)}
+                />
+              </div>
+            ))}
           </div>
         </section>
 
-        <footer className="flex shrink-0 items-center justify-between border-t border-gold-200/20 bg-cream-warm/95 px-4 py-3 backdrop-blur-2xl">
-          <button className="inline-flex h-10 items-center gap-2 rounded-full px-3 text-[13px] font-medium text-ink-muted hover:bg-manor-100" onClick={resetAll}>
-            <RotateCcw size={15} /> 恢复默认
+        <footer className="flex shrink-0 items-center gap-2 border-t border-gold-200/20 bg-cream-warm/95 px-4 py-3 backdrop-blur-2xl">
+          <button className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium text-ink-muted hover:bg-manor-100" onClick={resetToDefault}>
+            <RotateCcw size={14} /> 默认模板
           </button>
-          <div className="flex items-center gap-3">
-            {saved && <span className="text-xs font-semibold text-sage-600">已保存</span>}
-            <button className="manor-btn-primary inline-flex h-10 items-center gap-2 px-5 text-[13px]" onClick={saveAll}>
-              <Check size={16} /> 保存
-            </button>
-          </div>
+          <button className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium text-rose-600 hover:bg-rose-50" onClick={clearAll}>
+            <Trash2 size={14} /> 一键清空
+          </button>
+          <div className="flex-1" />
+          {saved && <span className="text-xs font-semibold text-sage-600">已保存</span>}
+          <button className="manor-btn-primary inline-flex h-10 items-center gap-2 px-5 text-[13px]" onClick={saveAll}>
+            <Check size={16} /> 保存
+          </button>
         </footer>
       </div>
     </main>
   );
 }
 
-function getFriendMetrics(f: AIFriend): Record<string, number> {
+/* ─── helpers ─── */
+
+/** 根据预设人物推导默认量化指标 */
+function getDefaultMetrics(f: AIFriend): Record<string, number> {
   const text = (f.name + f.title + f.personality + f.job + f.careFocus + f.quirks + f.id).toLowerCase();
+  let m1 = 50, m2 = 50, m3 = 50, m4 = 50, m5 = 50;
+  if (text.includes("nana") || text.includes("娜娜")) { m2 = 80; m1 = 55; m5 = 45; }
+  if (text.includes("温柔") || text.includes("接住")) m2 = Math.max(m2, 78);
+  if (text.includes("kai") || text.includes("凯凯")) { m5 = 85; m1 = 75; m4 = 65; }
+  if (text.includes("嘴欠") || text.includes("吐槽")) m5 = Math.max(m5, 80);
+  if (text.includes("lin") || text.includes("博士")) { m3 = 90; m1 = 35; m4 = 55; }
+  if (text.includes("分析") || text.includes("结构")) m3 = Math.max(m3, 80);
+  if (text.includes("momo") || text.includes("末末")) { m4 = 88; m1 = 60; }
+  if (text.includes("行动") || text.includes("催")) m4 = Math.max(m4, 82);
+  if (text.includes("yan") || text.includes("阿言")) { m3 = 75; m2 = 30; m1 = 30; }
+  if (text.includes("风险") || text.includes("谨慎")) m3 = Math.max(m3, 70);
+  return { m1, m2, m3, m4, m5 };
+}
 
-  let extraversion = 50, empathy = 50, analysis = 50, drive = 50, playfulness = 50;
+/* ─── localStorage 持久化自定义指标/字段 ─── */
 
-  if (text.includes("nana") || text.includes("娜娜")) { empathy = 80; extraversion = 55; playfulness = 45; }
-  if (text.includes("温柔") || text.includes("接住")) empathy = Math.max(empathy, 78);
-  if (text.includes("软") || text.includes("安慰")) empathy = Math.max(empathy, 75);
+const METRICS_STORAGE_PREFIX = "ziki-custom-metrics:";
+const FIELDS_STORAGE_PREFIX = "ziki-custom-fields:";
 
-  if (text.includes("kai") || text.includes("凯凯")) { playfulness = 85; extraversion = 75; drive = 65; }
-  if (text.includes("嘴欠") || text.includes("吐槽")) playfulness = Math.max(playfulness, 80);
+function loadCustomMetrics(friendId: string): MetricRow[] | null {
+  try {
+    const raw = localStorage.getItem(METRICS_STORAGE_PREFIX + friendId);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length !== 5) return null;
+    return arr.map((m: any) => ({
+      key: typeof m.key === "string" ? m.key : "m1",
+      value: typeof m.value === "number" ? m.value : 50,
+      label: typeof m.label === "string" ? m.label.slice(0, 12) : "",
+      hint: typeof m.hint === "string" ? m.hint.slice(0, 40) : ""
+    }));
+  } catch { return null; }
+}
+function saveCustomMetrics(friendId: string, rows: MetricRow[] | null) {
+  if (!rows) { localStorage.removeItem(METRICS_STORAGE_PREFIX + friendId); return; }
+  localStorage.setItem(METRICS_STORAGE_PREFIX + friendId, JSON.stringify(rows));
+}
 
-  if (text.includes("lin") || text.includes("博士")) { analysis = 90; extraversion = 35; drive = 55; }
-  if (text.includes("分析") || text.includes("拆") || text.includes("结构")) analysis = Math.max(analysis, 80);
+function loadCustomFields(friendId: string): FieldRow[] | null {
+  try {
+    const raw = localStorage.getItem(FIELDS_STORAGE_PREFIX + friendId);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length !== 6) return null;
+    return arr.map((f: any) => ({
+      key: typeof f.key === "string" ? f.key : "",
+      label: typeof f.label === "string" ? f.label.slice(0, 12) : "",
+      hint: typeof f.hint === "string" ? f.hint.slice(0, 40) : DEFAULT_FIELD_TEMPLATES.find((d) => d.key === f.key)?.hint || "",
+      value: typeof f.value === "string" ? f.value : ""
+    }));
+  } catch { return null; }
+}
+function saveCustomFields(friendId: string, rows: FieldRow[] | null) {
+  if (!rows) { localStorage.removeItem(FIELDS_STORAGE_PREFIX + friendId); return; }
+  localStorage.setItem(FIELDS_STORAGE_PREFIX + friendId, JSON.stringify(rows.map((r) => ({ key: r.key, label: r.label, hint: r.hint, value: r.value }))));
+}
 
-  if (text.includes("momo") || text.includes("末末")) { drive = 88; extraversion = 60; }
-  if (text.includes("行动") || text.includes("做") || text.includes("催")) drive = Math.max(drive, 82);
+/* ─── 头像上传 ─── */
 
-  if (text.includes("yan") || text.includes("阿言")) { analysis = 75; empathy = 30; extraversion = 30; }
-  if (text.includes("风险") || text.includes("谨慎")) analysis = Math.max(analysis, 70);
+function pickAvatarFn(
+  setAvatar: (url: string) => void,
+  setSaved: (v: boolean) => void
+) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/png,image/jpeg,image/webp";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const url = await compressAndReadImage2(file);
+      setAvatar(url);
+      setSaved(false);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "处理失败");
+    }
+  };
+  input.click();
+}
 
-  return { extraversion, empathy, analysis, drive, playfulness };
+async function compressAndReadImage2(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error("请选择图片文件");
+  if (file.size > 4 * 1024 * 1024) throw new Error("图片太大，4MB 以内");
+  const src = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
+    r.onerror = () => reject(new Error("失败"));
+    r.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("解析失败"));
+    i.src = src;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 200;
+  const ctx = canvas.getContext("2d")!;
+  const side = Math.min(img.width, img.height);
+  ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 200, 200);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.8));
+  if (!blob) return canvas.toDataURL("image/jpeg", 0.8);
+  return new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => { if (typeof r.result === "string") resolve(r.result); else reject(new Error("失败")); };
+    r.onerror = () => reject(new Error("失败"));
+    r.readAsDataURL(blob);
+  });
 }
