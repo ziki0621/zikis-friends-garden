@@ -89,6 +89,9 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const runRef = useRef(0);
   const chatFocusedRef = useRef(true);
+  /** deliver() 闭包里的 group.id 不会随React更新——用ref同步最新值 */
+  const groupIdRef = useRef(group.id);
+  groupIdRef.current = group.id;
 
   // 追踪焦点状态
   useEffect(() => {
@@ -295,8 +298,9 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
     for (const [i, item] of items.entries()) {
       if (item.type !== "friend") continue;
 
-      // 若在此期间 group.id 变了（桌面端切换对话）→ 停止，batch 保留给新实例回放
-      if (group.id !== myGroupId || runRef.current !== runId) return out;
+      // 桌面端切换对话时 React 更新了 props，闭包内的 group.id 不变，
+      // 但 groupIdRef.current 始终同步到最新值
+      if (groupIdRef.current !== myGroupId || runRef.current !== runId) return out;
 
       const t = sched[i] ?? fallbackTiming();
       await sleep(t.beforeTypingMs);
@@ -304,8 +308,10 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
 
       setTypingFriend({ name: item.name, color: item.color, avatar: friends.find((f) => f.id === item.friendId)?.avatar });
       await sleep(t.typingMs);
-      if (runRef.current !== runId) return out;
+      if (runRef.current !== runId || groupIdRef.current !== myGroupId) return out;
 
+      // 只在仍属于当前对话时才投放到时间线
+      setTimeline((c) => [...c, item]);
       out.push(item);
       // 用户不在看这个聊天 → 递增未读
       if (!chatFocusedRef.current) incrementUnread(group.id);
