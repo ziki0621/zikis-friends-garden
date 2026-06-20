@@ -86,13 +86,16 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
     window.addEventListener("storage", onStorage);
     window.addEventListener("user-profile-changed", refreshAll);
     window.addEventListener("friend-updated", refreshAll);
+    const onUnreadCleared = () => setUnreadRefresh((c) => c + 1);
     window.addEventListener("group-avatar-changed", refreshAll);
+    window.addEventListener("unread-cleared", onUnreadCleared);
     return () => {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("user-profile-changed", refreshAll);
       window.removeEventListener("friend-updated", refreshAll);
       window.removeEventListener("group-avatar-changed", refreshAll);
+      window.removeEventListener("unread-cleared", onUnreadCleared);
     };
   }, []);
 

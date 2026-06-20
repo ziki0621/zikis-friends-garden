@@ -162,11 +162,16 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
     writeStoredTimeline(group.id, timeline);
   }, [group.id, timeline, timelineLoaded]);
 
-  // 打开对话时记录活动时间 + 清零未读 + 种子初始化
+  // 打开对话时记录活动时间 + 清零未读 + 清除旧 pending + 通知 inbox 刷新
   useEffect(() => {
     touchChat(group.id);
     clearUnread(group.id);
     seedInitialUnreads();
+    // 清除可能残留的旧 pending batch（防止切出再切入时回放旧消息）
+    const existing = readPendingBatch();
+    if (existing && existing.groupId === group.id) clearPendingBatch();
+    // 通知 inbox 刷新未读数
+    window.dispatchEvent(new Event("unread-cleared"));
     setWallpaper(getWallpaperClass());
     const onWallpaper = () => setWallpaper(getWallpaperClass());
     window.addEventListener("wallpaper-changed", onWallpaper);
