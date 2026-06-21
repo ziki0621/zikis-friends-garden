@@ -70,7 +70,7 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
     setFriends(readVisibleAIFriends());
     setPinned(getPinnedChats());
     seedInitialUnreads();
-    requestAnimationFrame(() => setMounted(true));
+    setMounted(true);
     // 首次加载开场动画
     const timer = setTimeout(() => setSplash(false), 1400);
     // 从聊天页返回时刷新未读数
