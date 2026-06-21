@@ -101,10 +101,9 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
 
   /* ── 合并所有对话 ── */
   const conversations = useMemo<ConversationItem[]>(() => {
-    // 群聊
-    const groupItems: ConversationItem[] = sourceGroups.map((group) => {
+    const groupItems: ConversationItem[] = sourceGroups.map((group, i) => {
       const cfg = getConfiguredFriends(group.id, group.friends, settings);
-      const activity = getLastActivity(group.id);
+      const activity = mounted ? getLastActivity(group.id) : 0;
       return {
         id: group.id,
         type: "group" as const,
@@ -112,19 +111,18 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
         description: group.description,
         lastMessage: group.lastMessage,
         lastTime: activity ? formatRelativeTime(activity) : group.lastTime,
-        unread: getUnread(group.id),
+        unread: mounted ? getUnread(group.id) : group.unread,
         accent: group.accent,
         style: group.style,
         friends: group.friends,
         configuredFriends: cfg,
         friendLine: cfg.map((f) => f.name).join("、"),
-        lastActivity: activity
+        lastActivity: activity || i
       };
     });
 
-    // 私聊（已创建的 AI 朋友）
-    const dmItems: ConversationItem[] = friends.map((friend) => {
-      const activity = getLastActivity(`dm-${friend.id}`);
+    const dmItems: ConversationItem[] = friends.map((friend, i) => {
+      const activity = mounted ? getLastActivity(`dm-${friend.id}`) : 0;
       return {
         id: `dm-${friend.id}`,
         type: "dm" as const,
@@ -132,28 +130,29 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
         description: friend.title,
         lastMessage: friend.title,
         lastTime: activity ? formatRelativeTime(activity) : "",
-        unread: getUnread(`dm-${friend.id}`),
+        unread: mounted ? getUnread(`dm-${friend.id}`) : 0,
         accent: friend.color,
         style: `一对一私聊 · ${friend.relationship}`,
         friends: [friend],
         configuredFriends: [friend],
         friendLine: "",
-        lastActivity: activity
+        lastActivity: activity || (i + 1000)
       };
     });
 
     const all = [...groupItems, ...dmItems];
 
-    // 排序：置顶在前，其余按最近活动倒序，无活动的保持原序
     const pinnedSet = new Set(pinned);
-    return all.sort((a, b) => {
+    // mounted 为 true 才排序（客户端挂载后）；SSR/hydration 阶段保持原始顺序不动
+    if (!mounted) return all;
+    return [...all].sort((a, b) => {
       const aPin = pinnedSet.has(a.id) ? 1 : 0;
       const bPin = pinnedSet.has(b.id) ? 1 : 0;
       if (aPin !== bPin) return bPin - aPin;
       if (aPin && bPin) return b.lastActivity - a.lastActivity;
       return b.lastActivity - a.lastActivity;
     });
-  }, [sourceGroups, friends, settings, pinned, unreadRefresh]);
+  }, [sourceGroups, friends, settings, pinned, unreadRefresh, mounted]);
 
   const filtered = useMemo(() => {
     const kw = query.trim().toLowerCase();
