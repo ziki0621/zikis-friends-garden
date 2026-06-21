@@ -153,6 +153,19 @@ function writeHiddenAIFriendIds(friendIds: string[]) {
   window.localStorage.setItem(HIDDEN_FRIENDS_KEY, JSON.stringify(friendIds.slice(0, 50)));
 }
 
+/** 首次运行时给 5 个预设朋友随机换 emoji（只在客户端，仅一次） */
+export function seedDefaultFriendEmojis() {
+  if (typeof window === "undefined") return;
+  if (window.localStorage.getItem("ziki-default-emojis-seeded")) return;
+  const pool = ["🐱","🐶","🐰","🦊","🐻","🐼","🐨","🐸","🐙","🦄","🐵","🐮","🐷","🐭","🐹","🐔","🐧","🦁","🐯","🐺","🦝","🦥","🦭","🐬","🐳","🦋","🐝","🐞","🪲","🦉","🦅","🦇","🌸","🔥","🧠","🚀","🛡️","🎭","🎪","🎨","🌟"];
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  for (const id of ["nana","kai","lin","momo","yan"]) {
+    updateStoredAIFriend(id, { emoji: shuffled.shift()! });
+  }
+  window.localStorage.setItem("ziki-default-emojis-seeded", "1");
+  window.dispatchEvent(new Event("friend-updated"));
+}
+
 function sanitizeFriend(value: unknown): AIFriend | null {
   if (!value || typeof value !== "object") {
     return null;

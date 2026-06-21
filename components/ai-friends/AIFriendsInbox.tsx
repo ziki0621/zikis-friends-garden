@@ -19,7 +19,8 @@ import {
 } from "@/components/ai-friends/friendChatGroupStorage";
 import {
   deleteStoredAIFriend,
-  readVisibleAIFriends
+  readVisibleAIFriends,
+  seedDefaultFriendEmojis
 } from "@/components/ai-friends/aiFriendRosterStorage";
 import { getPinnedChats, pinChat, unpinChat } from "@/components/ai-friends/pinStorage";
 import { getLastActivity } from "@/components/ai-friends/activityStorage";
@@ -70,6 +71,7 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
     setFriends(readVisibleAIFriends());
     setPinned(getPinnedChats());
     seedInitialUnreads();
+    seedDefaultFriendEmojis();
     setMounted(true);
     // 首次加载开场动画
     const timer = setTimeout(() => setSplash(false), 1400);
