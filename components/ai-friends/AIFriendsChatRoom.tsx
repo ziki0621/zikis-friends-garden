@@ -37,6 +37,7 @@ import {
 import { getUserApiConfig } from "@/components/ai-friends/apiKeyStorage";
 import { getAiMode } from "@/components/ai-friends/modeStorage";
 import { getWallpaperClass } from "@/components/ai-friends/wallpaperStorage";
+import { dequeueAllMessages } from "@/components/ai-friends/proactiveEngine";
 import { useRouter } from "next/navigation";
 
 /* ── types ── */
@@ -139,6 +140,21 @@ export function AIFriendsChatRoom({ group, fullWidth }: { group: FriendChatGroup
       }));
       baseTimeline = [...baseTimeline, ...pendingItems];
       clearPendingBatch();
+    }
+    // 注入自主消息队列中的消息
+    const proactiveMsgs = dequeueAllMessages().filter((m) => m.groupId === group.id);
+    if (proactiveMsgs.length > 0) {
+      const pItems: TimelineItem[] = proactiveMsgs.map((pm) => ({
+        id: pm.id,
+        type: "friend" as const,
+        friendId: pm.friendId,
+        name: pm.friendName,
+        color: (next.find((f) => f.id === pm.friendId) || next[0] || {}).color || "#8B5CF6",
+        content: pm.content,
+        isNew: false,
+        timestamp: pm.timestamp
+      }));
+      baseTimeline = [...baseTimeline, ...pItems];
     }
     setTimeline(baseTimeline);
     setTimelineLoaded(true);

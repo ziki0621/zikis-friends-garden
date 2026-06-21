@@ -26,6 +26,7 @@ import { getPinnedChats, pinChat, unpinChat } from "@/components/ai-friends/pinS
 import { getLastActivity } from "@/components/ai-friends/activityStorage";
 import { formatRelativeTime } from "@/components/ai-friends/timeUtils";
 import { clearUnread, getUnread, seedInitialUnreads } from "@/components/ai-friends/unreadStorage";
+import { startProactiveEngine, stopProactiveEngine } from "@/components/ai-friends/proactiveEngine";
 
 /* ═══ 统一的对话项类型 ═══ */
 type ConversationItem = {
@@ -73,6 +74,13 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
     seedInitialUnreads();
     seedDefaultFriendEmojis();
     setMounted(true);
+    // 启动自主消息引擎
+    startProactiveEngine(() => setUnreadRefresh((c) => c + 1));
+    // 频率变更时重启
+    const onFreqChange = () => {
+      startProactiveEngine(() => setUnreadRefresh((c) => c + 1));
+    };
+    window.addEventListener("proactive-frequency-changed", onFreqChange);
     // 首次加载开场动画
     const timer = setTimeout(() => setSplash(false), 1400);
     // 从聊天页返回时刷新未读数
@@ -98,6 +106,8 @@ export function AIFriendsInbox({ onSelectConversation, activeConversationId }: A
       window.removeEventListener("friend-updated", refreshAll);
       window.removeEventListener("group-avatar-changed", refreshAll);
       window.removeEventListener("unread-cleared", onUnreadCleared);
+      window.removeEventListener("proactive-frequency-changed", onFreqChange);
+      stopProactiveEngine();
     };
   }, []);
 

@@ -8,6 +8,7 @@ import {
   addProfile, updateProfile, deleteProfile, getActiveProfile
 } from "@/components/ai-friends/apiKeyStorage";
 import { getAiMode, setAiMode, type AiMode } from "@/components/ai-friends/modeStorage";
+import { getProactiveFrequency, setProactiveFrequency, type ProactiveFrequency } from "@/components/ai-friends/proactiveEngine";
 import { resetAllData, backupAllData, hasBackup, restoreFromBackup } from "@/components/ai-friends/resetStorage";
 
 const PRESETS = [
@@ -19,6 +20,7 @@ const PRESETS = [
 
 export default function SettingPage() {
   const [mode, setMode] = useState<AiMode>("realistic");
+  const [freq, setFreq] = useState<ProactiveFrequency>("off");
   const [backupExists, setBackupExists] = useState(false);
   const [profiles, setProfiles] = useState<ApiProfile[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -37,7 +39,12 @@ export default function SettingPage() {
   useEffect(() => {
     refreshProfiles();
     setMode(getAiMode());
+    setFreq(getProactiveFrequency());
     setBackupExists(hasBackup());
+    // 请求通知权限
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, []);
 
   function refreshProfiles() {
@@ -149,6 +156,47 @@ export default function SettingPage() {
                 </div>
                 <p className="mt-1.5 text-[11px] leading-4 text-ink-muted">独立编排，自然发言。</p>
               </button>
+            </div>
+          </div>
+
+          {/* 自主模式 */}
+          <div className="border-b border-gold-200/20 px-4 py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <h2 className="text-[14px] font-semibold text-ink-deep">自主消息</h2>
+              {freq !== "off" && (
+                <span className="text-[10px] font-medium text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">
+                  {freq === "low" ? "6小时" : freq === "medium" ? "2小时" : "30分钟"}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] leading-4 text-ink-muted mb-3">
+              AI 朋友会随机给你发消息。你需要保持页面打开（可以在后台标签页），授予通知权限后即使切到别的窗口也能收到提醒。
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                { v: "off", l: "关闭", d: "" },
+                { v: "low", l: "低频", d: "~6小时" },
+                { v: "medium", l: "中频", d: "~2小时" },
+                { v: "high", l: "高频", d: "~30分钟" }
+              ] as const).map((o) => (
+                <button
+                  key={o.v}
+                  className={`rounded-[12px] border py-2.5 px-2 text-center transition-all ${
+                    freq === o.v
+                      ? "border-purple-400 bg-purple-50 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.2)]"
+                      : "border-manor-200 bg-white hover:border-gold-300"
+                  }`}
+                  onClick={() => {
+                    setFreq(o.v);
+                    setProactiveFrequency(o.v);
+                    window.dispatchEvent(new Event("proactive-frequency-changed"));
+                  }}
+                >
+                  <div className="text-[12px] font-semibold text-ink-deep">{o.l}</div>
+                  {o.d && <div className="text-[10px] text-ink-muted mt-0.5">{o.d}</div>}
+                </button>
+              ))}
             </div>
           </div>
 
