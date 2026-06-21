@@ -235,7 +235,7 @@ function createMinimalFriend(name: string): AIFriend {
     quirks: "会问具体的小问题",
     boundaries: "不抢话，不制造依赖。",
     color: autoFriendColors[Math.floor(Math.random() * autoFriendColors.length)],
-    emoji: "🤖"
+    emoji: ["🐱","🐶","🐰","🦊","🐻","🐼","🐨","🐸","🐙","🦄","🐵","🐮","🐷","🐭","🐹","🐔","🐧","🦁","🐯","🐺","🦝","🦥","🦭","🐬","🐳","🦋","🐝","🐞","🪲","🦉","🦅","🦇"][Math.floor(Math.random() * 32)]
   };
   // 写入 custom friends
   const existing = (() => {
